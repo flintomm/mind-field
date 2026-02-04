@@ -1,0 +1,1935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind Field v0.5 - Diagnostic Onboarding</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        
+        .subtitle {
+            color: #888;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        
+        /* ===== DIAGNOSTIC SCREEN ===== */
+        #diagnostic-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 70vh;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        .welcome-title {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        
+        .welcome-subtitle {
+            font-size: 1.1rem;
+            color: #888;
+            margin-bottom: 40px;
+        }
+        
+        #start-btn {
+            padding: 18px 50px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background: linear-gradient(135deg, #9b59b6, #6b3fa0);
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(155, 89, 182, 0.4);
+        }
+        
+        #start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 30px rgba(155, 89, 182, 0.6);
+        }
+        
+        /* Question Container */
+        #question-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .progress-container {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .progress-text {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #9b59b6, #c39bd3);
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+        
+        .question-text {
+            font-size: 1.6rem;
+            color: #fff;
+            margin-bottom: 40px;
+            line-height: 1.4;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease;
+        }
+        
+        .question-text.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .answer-buttons {
+            display: flex;
+            gap: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease 0.2s;
+        }
+        
+        .answer-buttons.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .answer-btn {
+            padding: 20px 60px;
+            font-size: 1.3rem;
+            border: 3px solid;
+            border-radius: 12px;
+            cursor: pointer;
+            background: transparent;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .answer-btn.true-btn {
+            border-color: #4a9eff;
+            color: #4a9eff;
+        }
+        
+        .answer-btn.true-btn:hover {
+            background: rgba(74, 158, 255, 0.2);
+            transform: scale(1.05);
+        }
+        
+        .answer-btn.false-btn {
+            border-color: #ff4a6a;
+            color: #ff4a6a;
+        }
+        
+        .answer-btn.false-btn:hover {
+            background: rgba(255, 74, 106, 0.2);
+            transform: scale(1.05);
+        }
+        
+        .answer-btn:active {
+            transform: scale(0.98);
+        }
+        
+        /* Building Screen */
+        #building-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 70vh;
+            text-align: center;
+        }
+        
+        .building-text {
+            font-size: 1.8rem;
+            color: #fff;
+            margin-bottom: 30px;
+        }
+        
+        .building-loader {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .building-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #9b59b6;
+            animation: buildingPulse 1.4s ease-in-out infinite;
+        }
+        
+        .building-dot:nth-child(2) { animation-delay: 0.2s; }
+        .building-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes buildingPulse {
+            0%, 100% { transform: scale(0.8); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+        
+        /* Transition Message */
+        #transition-message {
+            display: none;
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(155, 89, 182, 0.95);
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            color: #fff;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+            z-index: 100;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        #transition-message.visible {
+            opacity: 1;
+        }
+        
+        #transition-message .dismiss-btn {
+            display: block;
+            margin-top: 15px;
+            padding: 8px 20px;
+            font-size: 0.9rem;
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 8px;
+            background: transparent;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        #transition-message .dismiss-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: #fff;
+        }
+        
+        /* ===== MAIN GAME AREA (initially hidden) ===== */
+        #game-area {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        #game-area.visible {
+            opacity: 1;
+        }
+        
+        .main-container {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        #canvas-container {
+            position: relative;
+        }
+        
+        canvas {
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        
+        /* Quadrant labels on canvas */
+        .quadrant-labels {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            top: 0;
+            left: 0;
+        }
+        
+        .quadrant-label {
+            position: absolute;
+            font-size: 10px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .ql-tl { top: 15px; left: 20px; }
+        .ql-tr { top: 15px; right: 20px; text-align: right; }
+        .ql-bl { bottom: 15px; left: 20px; }
+        .ql-br { bottom: 15px; right: 20px; text-align: right; }
+        
+        /* Input Panel */
+        #input-panel {
+            background: rgba(255,255,255,0.05);
+            padding: 25px;
+            border-radius: 12px;
+            width: 320px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            opacity: 0;
+            transform: translateX(30px);
+            transition: all 0.5s ease 0.3s;
+        }
+        
+        #input-panel.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        #input-panel h2 {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .input-group {
+            margin-bottom: 18px;
+        }
+        
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+        
+        #thought-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            background: #2a2a3e;
+            color: #fff;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        
+        #thought-input:focus {
+            outline: none;
+            border-color: #9b59b6;
+        }
+        
+        #thought-input::placeholder {
+            color: #666;
+        }
+        
+        /* Radio buttons */
+        .radio-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .radio-option {
+            flex: 1;
+            padding: 10px;
+            background: #2a2a3e;
+            border: 2px solid #333;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        
+        .radio-option:hover {
+            border-color: #555;
+        }
+        
+        .radio-option.selected {
+            border-color: #9b59b6;
+            background: rgba(155, 89, 182, 0.2);
+        }
+        
+        .radio-option.selected.good {
+            border-color: #4a9eff;
+            background: rgba(74, 158, 255, 0.2);
+        }
+        
+        .radio-option.selected.bad {
+            border-color: #ff4a6a;
+            background: rgba(255, 74, 106, 0.2);
+        }
+        
+        .radio-option input {
+            display: none;
+        }
+        
+        /* Weight slider */
+        .weight-slider-container {
+            padding: 10px;
+            background: #2a2a3e;
+            border-radius: 8px;
+        }
+        
+        .weight-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        
+        .weight-value {
+            text-align: center;
+            font-weight: bold;
+            color: #9b59b6;
+            margin-top: 8px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #333;
+            border-radius: 4px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #9b59b6;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #b369d6;
+        }
+        
+        #add-thought-btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #9b59b6;
+            color: white;
+            font-weight: 600;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+        
+        #add-thought-btn:hover {
+            background: #b369d6;
+            transform: translateY(-2px);
+        }
+        
+        #add-thought-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* Intensity slider */
+        .intensity-section {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+        
+        .intensity-section h3 {
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .intensity-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #f39c12;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        /* Controls section */
+        .controls-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-ceasefire {
+            flex: 1;
+            padding: 12px;
+            font-size: 0.9rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #444;
+            color: white;
+            transition: all 0.2s;
+        }
+        
+        .btn-ceasefire:hover {
+            background: #555;
+        }
+        
+        .btn-ceasefire.active {
+            background: #9b59b6;
+        }
+        
+        .btn-clear {
+            flex: 1;
+            padding: 12px;
+            font-size: 0.9rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #333;
+            color: #aaa;
+            transition: all 0.2s;
+        }
+        
+        .btn-clear:hover {
+            background: #444;
+            color: #fff;
+        }
+        
+        /* Score display */
+        #score-display {
+            font-size: 1.1rem;
+            margin-top: 15px;
+            padding: 12px 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        #score-display .winning {
+            font-weight: bold;
+        }
+        
+        #score-display .winning.good { color: #4a9eff; }
+        #score-display .winning.bad { color: #ff4a6a; }
+        #score-display .winning.neutral { color: #888; }
+        
+        /* Legend */
+        #legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            font-size: 0.8rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+        
+        .legend-dot.good { background: #4a9eff; }
+        .legend-dot.bad { background: #ff4a6a; }
+        .legend-dot.present { 
+            background: radial-gradient(circle, #fff 30%, #9b59b6 100%);
+            border-radius: 50%;
+        }
+        
+        /* Thoughts list */
+        #thoughts-list {
+            margin-top: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+        }
+        
+        .thought-item {
+            padding: 8px 10px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            background: rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .thought-item.good { border-left: 3px solid #4a9eff; }
+        .thought-item.bad { border-left: 3px solid #ff4a6a; }
+        
+        .thought-text {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .thought-meta {
+            color: #666;
+            font-size: 0.7rem;
+            margin-left: 10px;
+        }
+        
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+        
+        .empty-state .icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        /* Diagnostic tag for thoughts from questions */
+        .thought-item.diagnostic {
+            background: rgba(155, 89, 182, 0.15);
+        }
+        
+        .diagnostic-tag {
+            font-size: 0.65rem;
+            background: rgba(155, 89, 182, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 5px;
+            color: #c39bd3;
+        }
+        
+        @media (max-width: 900px) {
+            .main-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            #input-panel {
+                width: 100%;
+                max-width: 400px;
+            }
+            
+            .answer-btn {
+                padding: 16px 40px;
+                font-size: 1.1rem;
+            }
+            
+            .question-text {
+                font-size: 1.3rem;
+                padding: 0 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== DIAGNOSTIC SCREEN ===== -->
+    <div id="diagnostic-screen">
+        <div id="welcome-screen">
+            <div class="welcome-title">🏝️ Mind Field</div>
+            <p class="welcome-subtitle">Answer 8 quick questions to see what's firing at you.</p>
+            <button id="start-btn">Begin</button>
+        </div>
+        
+        <div id="question-container">
+            <div class="progress-container">
+                <div class="progress-text">Question <span id="question-num">1</span> of 8</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 12.5%"></div>
+                </div>
+            </div>
+            
+            <div class="question-text" id="question-text"></div>
+            
+            <div class="answer-buttons" id="answer-buttons">
+                <button class="answer-btn true-btn" id="true-btn">True</button>
+                <button class="answer-btn false-btn" id="false-btn">False</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ===== BUILDING SCREEN ===== -->
+    <div id="building-screen">
+        <div class="building-text">Building your Mind Field...</div>
+        <div class="building-loader">
+            <div class="building-dot"></div>
+            <div class="building-dot"></div>
+            <div class="building-dot"></div>
+        </div>
+    </div>
+    
+    <!-- ===== TRANSITION MESSAGE ===== -->
+    <div id="transition-message">
+        <div>This is what's firing at your present moment.</div>
+        <div style="margin-top: 8px; font-size: 0.95rem; opacity: 0.9;">Want to add more?</div>
+        <button class="dismiss-btn" id="dismiss-transition">Got it →</button>
+    </div>
+    
+    <!-- ===== MAIN GAME AREA ===== -->
+    <div id="game-area">
+        <h1>🏝️ Mind Field</h1>
+        <p class="subtitle">What's firing at you today?</p>
+        
+        <div class="main-container">
+            <div>
+                <div id="canvas-container">
+                    <canvas id="battlefield" width="600" height="400"></canvas>
+                    <div class="quadrant-labels">
+                        <span class="quadrant-label ql-tl">Good Memories<br>⏮️ ✅</span>
+                        <span class="quadrant-label ql-tr">Good Ideas<br>✅ ⏭️</span>
+                        <span class="quadrant-label ql-bl">Bad Memories<br>⏮️ ❌</span>
+                        <span class="quadrant-label ql-br">Bad Ideas/Fears<br>❌ ⏭️</span>
+                    </div>
+                </div>
+                
+                <div id="legend">
+                    <div class="legend-item">
+                        <div class="legend-dot good"></div>
+                        <span>Good Forces</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot bad"></div>
+                        <span>Bad Forces</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot present"></div>
+                        <span>NOW (You)</span>
+                    </div>
+                </div>
+                
+                <div id="score-display">
+                    <span id="score-text" class="winning neutral">Preparing battlefield...</span>
+                </div>
+            </div>
+            
+            <div id="input-panel">
+                <h2>🎯 Add to Battlefield</h2>
+                
+                <div class="input-group">
+                    <label>What's firing at you?</label>
+                    <input type="text" id="thought-input" placeholder="Enter a thought, memory, or worry...">
+                </div>
+                
+                <div class="input-group">
+                    <label>Type</label>
+                    <div class="radio-group" id="type-group">
+                        <label class="radio-option selected" data-value="past">
+                            <input type="radio" name="type" value="past" checked>
+                            ⏮️ Past Memory
+                        </label>
+                        <label class="radio-option" data-value="future">
+                            <input type="radio" name="type" value="future">
+                            ⏭️ Future Idea
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label>Valence</label>
+                    <div class="radio-group" id="valence-group">
+                        <label class="radio-option selected good" data-value="good">
+                            <input type="radio" name="valence" value="good" checked>
+                            ✅ Good
+                        </label>
+                        <label class="radio-option" data-value="bad">
+                            <input type="radio" name="valence" value="bad">
+                            ❌ Bad
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label>Weight</label>
+                    <div class="weight-slider-container">
+                        <div class="weight-labels">
+                            <span>Light</span>
+                            <span>Medium</span>
+                            <span>Heavy</span>
+                        </div>
+                        <input type="range" id="weight-slider" min="1" max="3" value="2" step="1">
+                        <div class="weight-value" id="weight-display">Medium</div>
+                    </div>
+                </div>
+                
+                <button id="add-thought-btn">Add to Battlefield</button>
+                
+                <div class="intensity-section">
+                    <h3>⚡ Firing Intensity</h3>
+                    <input type="range" id="intensity-slider" min="0.1" max="3" value="1" step="0.1">
+                    <div class="intensity-value" id="intensity-display">1.0x</div>
+                </div>
+                
+                <div class="controls-section">
+                    <button class="btn-ceasefire" id="ceasefire-btn">🕊️ Ceasefire</button>
+                    <button class="btn-clear" id="clear-btn">🗑️ Clear All</button>
+                </div>
+                
+                <div id="thoughts-list">
+                    <div class="empty-state">
+                        <div class="icon">💭</div>
+                        <div>Your thoughts will appear here.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== DIAGNOSTIC QUESTIONS =====
+        const DIAGNOSTIC_QUESTIONS = [
+            {
+                text: "I had a good memory surface recently",
+                domain: "past",
+                trueResult: { quadrant: "goodMemory", valence: "good", weight: 2 },
+                falseResult: { quadrant: "badMemory", valence: "bad", weight: 2 }
+            },
+            {
+                text: "Something from my past still bothers me",
+                domain: "past",
+                trueResult: { quadrant: "badMemory", valence: "bad", weight: 3 },
+                falseResult: { quadrant: "goodMemory", valence: "good", weight: 1 }
+            },
+            {
+                text: "I'm looking forward to something",
+                domain: "future",
+                trueResult: { quadrant: "goodIdea", valence: "good", weight: 2 },
+                falseResult: { quadrant: "badIdea", valence: "bad", weight: 2 }
+            },
+            {
+                text: "I'm worried about the future",
+                domain: "future",
+                trueResult: { quadrant: "badIdea", valence: "bad", weight: 3 },
+                falseResult: { quadrant: "goodIdea", valence: "good", weight: 1 }
+            },
+            {
+                text: "People have been kind to me lately",
+                domain: "past",
+                trueResult: { quadrant: "goodMemory", valence: "good", weight: 1 },
+                falseResult: { quadrant: "badMemory", valence: "bad", weight: 1 }
+            },
+            {
+                text: "I believe tomorrow will be better",
+                domain: "future",
+                trueResult: { quadrant: "goodIdea", valence: "good", weight: 2 },
+                falseResult: { quadrant: "badIdea", valence: "bad", weight: 2 }
+            },
+            {
+                text: "I did something I'm proud of recently",
+                domain: "past",
+                trueResult: { quadrant: "goodMemory", valence: "good", weight: 2 },
+                falseResult: { quadrant: "badMemory", valence: "bad", weight: 1 }
+            },
+            {
+                text: "I'm in control of my life right now",
+                domain: "future",
+                trueResult: { quadrant: "goodIdea", valence: "good", weight: 3 },
+                falseResult: { quadrant: "badIdea", valence: "bad", weight: 3 }
+            }
+        ];
+        
+        // ===== ONBOARDING STATE =====
+        let currentQuestion = 0;
+        let diagnosticAnswers = [];
+        let phase = 'welcome'; // welcome, questions, building, battlefield, full
+        
+        // ===== GAME STATE =====
+        let ceasefireMode = false;
+        let ceasefireTransition = 0;
+        let animationFrame;
+        let lastTime = 0;
+        let firingIntensity = 1.0;
+        let thoughts = []; // List of added thoughts
+        
+        // ===== QUADRANT DEFINITIONS =====
+        const QUADRANTS = {
+            goodMemory: { name: "Good Memory", cx: 180, cy: 120, xRange: [80, 280], yRange: [50, 180] },
+            goodIdea: { name: "Good Idea", cx: 420, cy: 120, xRange: [320, 520], yRange: [50, 180] },
+            badMemory: { name: "Bad Memory", cx: 180, cy: 300, xRange: [80, 280], yRange: [220, 350] },
+            badIdea: { name: "Bad Idea", cx: 420, cy: 300, xRange: [320, 520], yRange: [220, 350] }
+        };
+        
+        // ===== PRESENT MOMENT STATE =====
+        const presentMoment = {
+            x: 300,
+            y: 200,
+            baseRadius: 25,
+            currentRadius: 25,
+            pulsePhase: 0,
+            goodEnergy: 0,
+            badEnergy: 0,
+            shakeX: 0,
+            shakeY: 0,
+            shakeIntensity: 0,
+            glowIntensity: 0,
+            hitFlash: 0,
+            lastHitSide: null,
+            calmness: 0
+        };
+        
+        // ===== UNIT & COMBAT SYSTEM =====
+        let units = [];
+        let projectiles = [];
+        let impacts = [];
+        let thoughtBubbles = [];
+        
+        // Weight-based configs
+        const WEIGHT_CONFIGS = {
+            1: { // Light
+                unitCounts: [1, 2],
+                unitTypes: ['infantry'],
+                baseFireRate: 120, // frames
+                projectileSize: 2,
+                label: 'Light'
+            },
+            2: { // Medium
+                unitCounts: [2, 3],
+                unitTypes: ['infantry', 'infantry', 'tank'],
+                baseFireRate: 80,
+                projectileSize: 3,
+                label: 'Medium'
+            },
+            3: { // Heavy
+                unitCounts: [3, 4],
+                unitTypes: ['tank', 'tank', 'artillery'],
+                baseFireRate: 40,
+                projectileSize: 4,
+                label: 'Heavy'
+            }
+        };
+        
+        const UNIT_TYPES = {
+            infantry: { size: 5, speed: 0.3, shape: 'circle' },
+            tank: { size: 10, speed: 0.15, shape: 'square' },
+            artillery: { size: 12, speed: 0.1, shape: 'diamond' }
+        };
+        
+        // ===== CANVAS SETUP =====
+        const canvas = document.getElementById('battlefield');
+        const ctx = canvas.getContext('2d');
+        
+        // ===== COLORS =====
+        const colors = {
+            good: '#4a9eff',
+            goodDark: '#2a5e9f',
+            goodLight: '#7ab8ff',
+            bad: '#ff4a6a',
+            badDark: '#9f2a3a',
+            badLight: '#ff7a8a',
+            neutral: '#555',
+            neutralDark: '#333',
+            water: '#1a1a2e',
+            present: '#9b59b6',
+            presentLight: '#c39bd3',
+            quadrantGood: 'rgba(74, 158, 255, 0.08)',
+            quadrantBad: 'rgba(255, 74, 106, 0.08)'
+        };
+        
+        // ===== ONBOARDING FUNCTIONS =====
+        function startDiagnostic() {
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('question-container').style.display = 'flex';
+            phase = 'questions';
+            showQuestion(0);
+        }
+        
+        function showQuestion(index) {
+            currentQuestion = index;
+            const question = DIAGNOSTIC_QUESTIONS[index];
+            
+            // Update progress
+            document.getElementById('question-num').textContent = index + 1;
+            document.getElementById('progress-fill').style.width = ((index + 1) / 8 * 100) + '%';
+            
+            // Animate question in
+            const questionText = document.getElementById('question-text');
+            const answerButtons = document.getElementById('answer-buttons');
+            
+            questionText.classList.remove('visible');
+            answerButtons.classList.remove('visible');
+            
+            setTimeout(() => {
+                questionText.textContent = `"${question.text}"`;
+                questionText.classList.add('visible');
+                answerButtons.classList.add('visible');
+            }, 100);
+        }
+        
+        function answerQuestion(answer) {
+            const question = DIAGNOSTIC_QUESTIONS[currentQuestion];
+            const result = answer ? question.trueResult : question.falseResult;
+            
+            diagnosticAnswers.push({
+                question: question.text,
+                answer: answer,
+                ...result
+            });
+            
+            if (currentQuestion < DIAGNOSTIC_QUESTIONS.length - 1) {
+                showQuestion(currentQuestion + 1);
+            } else {
+                startBuildingPhase();
+            }
+        }
+        
+        function startBuildingPhase() {
+            document.getElementById('diagnostic-screen').style.display = 'none';
+            document.getElementById('building-screen').style.display = 'flex';
+            phase = 'building';
+            
+            // Show game area but not input panel yet
+            document.getElementById('game-area').style.display = 'flex';
+            
+            // Start animation loop
+            lastTime = performance.now();
+            animationFrame = requestAnimationFrame(gameLoop);
+            
+            // Spawn units from diagnostic answers with staggered timing
+            let spawnDelay = 500;
+            diagnosticAnswers.forEach((answer, index) => {
+                setTimeout(() => {
+                    // Create a thought entry for each diagnostic answer
+                    const thought = {
+                        id: Date.now() + index,
+                        text: answer.question,
+                        type: answer.quadrant.includes('Memory') ? 'past' : 'future',
+                        valence: answer.valence,
+                        weight: answer.weight,
+                        isDiagnostic: true
+                    };
+                    thoughts.push(thought);
+                    spawnUnitsForThought(thought);
+                }, spawnDelay * index);
+            });
+            
+            // After building, show battlefield
+            setTimeout(() => {
+                showBattlefieldPhase();
+            }, 2000 + spawnDelay * diagnosticAnswers.length);
+        }
+        
+        function showBattlefieldPhase() {
+            document.getElementById('building-screen').style.display = 'none';
+            document.getElementById('game-area').classList.add('visible');
+            phase = 'battlefield';
+            
+            updateDisplay();
+            updateThoughtsList();
+            
+            // Let it run for a few seconds, then show transition message
+            setTimeout(() => {
+                showTransitionMessage();
+            }, 5000);
+        }
+        
+        function showTransitionMessage() {
+            const msg = document.getElementById('transition-message');
+            msg.style.display = 'block';
+            setTimeout(() => msg.classList.add('visible'), 50);
+        }
+        
+        function dismissTransition() {
+            const msg = document.getElementById('transition-message');
+            msg.classList.remove('visible');
+            setTimeout(() => {
+                msg.style.display = 'none';
+                showFullInterface();
+            }, 500);
+        }
+        
+        function showFullInterface() {
+            document.getElementById('input-panel').classList.add('visible');
+            phase = 'full';
+            document.getElementById('thought-input').focus();
+        }
+        
+        // ===== UNIT MANAGEMENT =====
+        function getQuadrantKey(type, valence) {
+            if (type === 'past') {
+                return valence === 'good' ? 'goodMemory' : 'badMemory';
+            } else {
+                return valence === 'good' ? 'goodIdea' : 'badIdea';
+            }
+        }
+        
+        function createUnit(side, quadrant, weight, thoughtId) {
+            const q = QUADRANTS[quadrant];
+            const config = WEIGHT_CONFIGS[weight];
+            const types = config.unitTypes;
+            const type = types[Math.floor(Math.random() * types.length)];
+            const unitConfig = UNIT_TYPES[type];
+            
+            // Random position within quadrant bounds
+            const x = q.xRange[0] + Math.random() * (q.xRange[1] - q.xRange[0]);
+            const y = q.yRange[0] + Math.random() * (q.yRange[1] - q.yRange[0]);
+            
+            return {
+                x: x,
+                y: y,
+                homeX: x,
+                homeY: y,
+                quadrant: quadrant,
+                side: side,
+                type: type,
+                size: unitConfig.size,
+                speed: unitConfig.speed,
+                shape: unitConfig.shape,
+                weight: weight,
+                baseFireRate: config.baseFireRate,
+                framesSinceFired: Math.floor(Math.random() * config.baseFireRate),
+                projectileSize: config.projectileSize,
+                opacity: 0,
+                isRogue: false,
+                wobble: Math.random() * Math.PI * 2,
+                thoughtId: thoughtId
+            };
+        }
+        
+        function spawnUnitsForThought(thought) {
+            const config = WEIGHT_CONFIGS[thought.weight];
+            const counts = config.unitCounts;
+            const numUnits = counts[0] + Math.floor(Math.random() * (counts[1] - counts[0] + 1));
+            const quadrant = thought.isDiagnostic 
+                ? (thought.type === 'past' 
+                    ? (thought.valence === 'good' ? 'goodMemory' : 'badMemory')
+                    : (thought.valence === 'good' ? 'goodIdea' : 'badIdea'))
+                : getQuadrantKey(thought.type, thought.valence);
+            const side = thought.valence;
+            
+            for (let i = 0; i < numUnits; i++) {
+                units.push(createUnit(side, quadrant, thought.weight, thought.id));
+            }
+        }
+        
+        function fireProjectile(unit) {
+            const targetX = presentMoment.x + (Math.random() - 0.5) * 20;
+            const targetY = presentMoment.y + (Math.random() - 0.5) * 20;
+            
+            const dx = targetX - unit.x;
+            const dy = targetY - unit.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const baseDuration = dist * 3 + 500;
+            const duration = baseDuration / firingIntensity;
+            
+            projectiles.push({
+                startX: unit.x,
+                startY: unit.y,
+                targetX: targetX,
+                targetY: targetY,
+                x: unit.x,
+                y: unit.y,
+                side: unit.side,
+                size: unit.projectileSize,
+                startTime: Date.now(),
+                duration: duration,
+                arcHeight: dist * 0.15
+            });
+        }
+        
+        function createImpact(x, y, side, size) {
+            impacts.push({
+                x: x,
+                y: y,
+                side: side,
+                size: size || 3,
+                startTime: Date.now(),
+                duration: 400
+            });
+            
+            presentMoment.hitFlash = 1;
+            presentMoment.lastHitSide = side;
+            
+            const impactStrength = (size || 3) / 3 * 0.15;
+            
+            if (side === 'good') {
+                presentMoment.goodEnergy = Math.min(1, presentMoment.goodEnergy + impactStrength);
+                presentMoment.glowIntensity = Math.min(1, presentMoment.glowIntensity + 0.2);
+            } else {
+                presentMoment.badEnergy = Math.min(1, presentMoment.badEnergy + impactStrength);
+                presentMoment.shakeIntensity = Math.min(1, presentMoment.shakeIntensity + 0.3);
+            }
+        }
+        
+        function createThoughtBubble(x, y) {
+            const bubbles = ["💭", "...", "🤔", "😅", "!!", "whoops", "can't stop..."];
+            thoughtBubbles.push({
+                x: x,
+                y: y - 20,
+                text: bubbles[Math.floor(Math.random() * bubbles.length)],
+                startTime: Date.now(),
+                duration: 1500
+            });
+        }
+        
+        // ===== DRAWING =====
+        function drawIsland() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw water
+            ctx.fillStyle = colors.water;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw island base
+            ctx.beginPath();
+            ctx.moveTo(100, 200);
+            ctx.bezierCurveTo(80, 100, 200, 30, 300, 50);
+            ctx.bezierCurveTo(400, 30, 520, 100, 500, 200);
+            ctx.bezierCurveTo(550, 300, 450, 400, 300, 380);
+            ctx.bezierCurveTo(150, 400, 50, 300, 100, 200);
+            ctx.closePath();
+            ctx.fillStyle = '#2a2a3e';
+            ctx.fill();
+            
+            // Draw quadrants with subtle shading
+            drawQuadrant('goodMemory', colors.quadrantGood);
+            drawQuadrant('goodIdea', colors.quadrantGood);
+            drawQuadrant('badMemory', colors.quadrantBad);
+            drawQuadrant('badIdea', colors.quadrantBad);
+            
+            // Draw center dividing lines (subtle)
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            
+            // Horizontal line
+            ctx.beginPath();
+            ctx.moveTo(100, 200);
+            ctx.lineTo(500, 200);
+            ctx.stroke();
+            
+            // Vertical line
+            ctx.beginPath();
+            ctx.moveTo(300, 60);
+            ctx.lineTo(300, 370);
+            ctx.stroke();
+            
+            ctx.setLineDash([]);
+            
+            // Draw coastline
+            ctx.beginPath();
+            ctx.moveTo(100, 200);
+            ctx.bezierCurveTo(80, 100, 200, 30, 300, 50);
+            ctx.bezierCurveTo(400, 30, 520, 100, 500, 200);
+            ctx.bezierCurveTo(550, 300, 450, 400, 300, 380);
+            ctx.bezierCurveTo(150, 400, 50, 300, 100, 200);
+            ctx.closePath();
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        function drawQuadrant(key, color) {
+            const q = QUADRANTS[key];
+            ctx.fillStyle = color;
+            
+            // Clip to island shape
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(100, 200);
+            ctx.bezierCurveTo(80, 100, 200, 30, 300, 50);
+            ctx.bezierCurveTo(400, 30, 520, 100, 500, 200);
+            ctx.bezierCurveTo(550, 300, 450, 400, 300, 380);
+            ctx.bezierCurveTo(150, 400, 50, 300, 100, 200);
+            ctx.closePath();
+            ctx.clip();
+            
+            ctx.fillRect(q.xRange[0], q.yRange[0], q.xRange[1] - q.xRange[0], q.yRange[1] - q.yRange[0]);
+            ctx.restore();
+        }
+        
+        function drawPresentMoment() {
+            const pm = presentMoment;
+            
+            if (pm.shakeIntensity > 0) {
+                pm.shakeX = (Math.random() - 0.5) * pm.shakeIntensity * 8;
+                pm.shakeY = (Math.random() - 0.5) * pm.shakeIntensity * 8;
+            } else {
+                pm.shakeX = 0;
+                pm.shakeY = 0;
+            }
+            
+            const x = pm.x + pm.shakeX;
+            const y = pm.y + pm.shakeY;
+            
+            pm.pulsePhase += 0.05 * firingIntensity;
+            const pulse = Math.sin(pm.pulsePhase) * 0.1 + 1;
+            const radius = pm.currentRadius * pulse;
+            
+            ctx.save();
+            
+            // Outer glow
+            const chaosLevel = (pm.goodEnergy + pm.badEnergy) / 2;
+            const glowRadius = radius + 20 + chaosLevel * 30;
+            
+            for (let i = 3; i > 0; i--) {
+                const layerRadius = radius + (glowRadius - radius) * (i / 3);
+                const alpha = 0.1 * (1 - i / 4) * (0.5 + pm.glowIntensity * 0.5);
+                
+                ctx.beginPath();
+                ctx.arc(x, y, layerRadius, 0, Math.PI * 2);
+                
+                let glowColor;
+                if (ceasefireMode && pm.calmness > 0.5) {
+                    glowColor = `rgba(255, 255, 255, ${alpha})`;
+                } else if (pm.goodEnergy > pm.badEnergy + 0.1) {
+                    glowColor = `rgba(74, 158, 255, ${alpha})`;
+                } else if (pm.badEnergy > pm.goodEnergy + 0.1) {
+                    glowColor = `rgba(255, 74, 106, ${alpha})`;
+                } else {
+                    glowColor = `rgba(155, 89, 182, ${alpha})`;
+                }
+                
+                ctx.fillStyle = glowColor;
+                ctx.fill();
+            }
+            
+            // Hit flash
+            if (pm.hitFlash > 0) {
+                ctx.beginPath();
+                ctx.arc(x, y, radius + 15 * pm.hitFlash, 0, Math.PI * 2);
+                const flashColor = pm.lastHitSide === 'good' 
+                    ? `rgba(74, 158, 255, ${pm.hitFlash * 0.5})`
+                    : `rgba(255, 74, 106, ${pm.hitFlash * 0.5})`;
+                ctx.fillStyle = flashColor;
+                ctx.fill();
+            }
+            
+            // Main orb
+            const gradient = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, 0, x, y, radius);
+            
+            if (ceasefireMode && pm.calmness > 0.3) {
+                const calmT = pm.calmness;
+                gradient.addColorStop(0, `rgba(255, 255, 255, ${0.9 + calmT * 0.1})`);
+                gradient.addColorStop(0.5, lerpColor('#ffffff', '#f4d03f', calmT));
+                gradient.addColorStop(1, lerpColor('#9b59b6', '#d4a017', calmT));
+            } else {
+                const goodRatio = pm.goodEnergy / (pm.goodEnergy + pm.badEnergy + 0.01);
+                
+                gradient.addColorStop(0, '#ffffff');
+                if (goodRatio > 0.6) {
+                    gradient.addColorStop(0.5, colors.goodLight);
+                    gradient.addColorStop(1, colors.good);
+                } else if (goodRatio < 0.4) {
+                    gradient.addColorStop(0.5, colors.badLight);
+                    gradient.addColorStop(1, colors.bad);
+                } else {
+                    gradient.addColorStop(0.5, colors.presentLight);
+                    gradient.addColorStop(1, colors.present);
+                }
+            }
+            
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // Inner highlight
+            ctx.beginPath();
+            ctx.arc(x - radius * 0.25, y - radius * 0.25, radius * 0.3, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.fill();
+            
+            // Outer ring
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = ceasefireMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Label
+            ctx.font = 'bold 12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = ceasefireMode ? 'rgba(255, 215, 0, 0.9)' : 'rgba(255, 255, 255, 0.8)';
+            ctx.fillText(ceasefireMode ? '✨ NOW ✨' : 'NOW', x, y + radius + 20);
+            
+            // Chaos indicator
+            if (!ceasefireMode && (pm.goodEnergy > 0.3 || pm.badEnergy > 0.3)) {
+                ctx.font = '10px sans-serif';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                const chaosText = chaosLevel > 0.7 ? 'OVERWHELMING' : chaosLevel > 0.4 ? 'intense' : 'under fire';
+                ctx.fillText(chaosText, x, y + radius + 35);
+            }
+            
+            ctx.restore();
+        }
+        
+        function drawUnits() {
+            units.forEach(unit => {
+                if (unit.opacity <= 0) return;
+                
+                ctx.save();
+                ctx.globalAlpha = unit.opacity;
+                
+                const baseColor = unit.side === 'good' ? colors.good : colors.bad;
+                const darkColor = unit.side === 'good' ? colors.goodDark : colors.badDark;
+                
+                ctx.translate(unit.x, unit.y);
+                
+                if (!ceasefireMode && unit.opacity > 0.5) {
+                    const wobbleAmount = Math.sin(Date.now() * 0.003 * firingIntensity + unit.wobble) * 1;
+                    ctx.translate(wobbleAmount, 0);
+                }
+                
+                const angle = Math.atan2(presentMoment.y - unit.y, presentMoment.x - unit.x);
+                ctx.rotate(angle);
+                
+                if (unit.shape === 'circle') {
+                    ctx.rotate(-angle);
+                    ctx.beginPath();
+                    ctx.arc(0, 0, unit.size, 0, Math.PI * 2);
+                    ctx.fillStyle = baseColor;
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                } else if (unit.shape === 'square') {
+                    ctx.fillStyle = darkColor;
+                    ctx.fillRect(-unit.size, -unit.size * 0.7, unit.size * 2, unit.size * 1.4);
+                    ctx.fillStyle = baseColor;
+                    ctx.fillRect(-unit.size * 0.6, -unit.size * 0.5, unit.size * 1.2, unit.size);
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(unit.size * 0.3, -2, unit.size * 0.8, 4);
+                } else if (unit.shape === 'diamond') {
+                    // Artillery - diamond shape
+                    ctx.rotate(-angle);
+                    ctx.beginPath();
+                    ctx.moveTo(0, -unit.size);
+                    ctx.lineTo(unit.size, 0);
+                    ctx.lineTo(0, unit.size);
+                    ctx.lineTo(-unit.size, 0);
+                    ctx.closePath();
+                    ctx.fillStyle = baseColor;
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    // Inner circle
+                    ctx.beginPath();
+                    ctx.arc(0, 0, unit.size * 0.4, 0, Math.PI * 2);
+                    ctx.fillStyle = darkColor;
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            });
+        }
+        
+        function drawProjectiles() {
+            const now = Date.now();
+            
+            projectiles.forEach(proj => {
+                const elapsed = now - proj.startTime;
+                const t = Math.min(elapsed / proj.duration, 1);
+                
+                const x = proj.startX + (proj.targetX - proj.startX) * t;
+                const arcY = proj.arcHeight * Math.sin(t * Math.PI);
+                const y = proj.startY + (proj.targetY - proj.startY) * t - arcY;
+                
+                proj.x = x;
+                proj.y = y;
+                
+                const color = proj.side === 'good' ? colors.goodLight : colors.badLight;
+                
+                ctx.save();
+                
+                // Trail
+                ctx.beginPath();
+                const prevT = Math.max(0, t - 0.1);
+                const trailX = proj.startX + (proj.targetX - proj.startX) * prevT;
+                const trailArcY = proj.arcHeight * Math.sin(prevT * Math.PI);
+                const trailY = proj.startY + (proj.targetY - proj.startY) * prevT - trailArcY;
+                
+                const gradient = ctx.createLinearGradient(trailX, trailY, x, y);
+                gradient.addColorStop(0, 'transparent');
+                gradient.addColorStop(1, color);
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = proj.size * 0.7;
+                ctx.moveTo(trailX, trailY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                
+                // Main projectile
+                ctx.beginPath();
+                ctx.arc(x, y, proj.size, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+                
+                // Glow
+                ctx.beginPath();
+                ctx.arc(x, y, proj.size * 2, 0, Math.PI * 2);
+                ctx.fillStyle = color.replace('ff', '44');
+                ctx.fill();
+                
+                ctx.restore();
+            });
+        }
+        
+        function drawImpacts() {
+            const now = Date.now();
+            
+            impacts.forEach(impact => {
+                const elapsed = now - impact.startTime;
+                const t = elapsed / impact.duration;
+                
+                if (t >= 1) return;
+                
+                const color = impact.side === 'good' ? colors.good : colors.bad;
+                const radius = 5 + t * 25 * (impact.size / 3);
+                const opacity = 1 - t;
+                
+                ctx.save();
+                ctx.globalAlpha = opacity * 0.6;
+                
+                ctx.beginPath();
+                ctx.arc(impact.x, impact.y, radius, 0, Math.PI * 2);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3 * (1 - t);
+                ctx.stroke();
+                
+                if (t < 0.3) {
+                    ctx.beginPath();
+                    ctx.arc(impact.x, impact.y, 8 * (1 - t * 3), 0, Math.PI * 2);
+                    ctx.fillStyle = '#fff';
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            });
+        }
+        
+        function drawThoughtBubbles() {
+            const now = Date.now();
+            
+            thoughtBubbles.forEach(bubble => {
+                const elapsed = now - bubble.startTime;
+                const t = elapsed / bubble.duration;
+                
+                if (t >= 1) return;
+                
+                const opacity = t < 0.2 ? t * 5 : (1 - (t - 0.2) / 0.8);
+                const y = bubble.y - t * 20;
+                
+                ctx.save();
+                ctx.globalAlpha = opacity;
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#fff';
+                ctx.fillText(bubble.text, bubble.x, y);
+                ctx.restore();
+            });
+        }
+        
+        // ===== ANIMATION LOOP =====
+        let frameCount = 0;
+        
+        function update(timestamp) {
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+            frameCount++;
+            
+            const now = Date.now();
+            
+            // Update ceasefire transition
+            if (ceasefireMode && ceasefireTransition < 1) {
+                ceasefireTransition = Math.min(1, ceasefireTransition + deltaTime * 0.002);
+            } else if (!ceasefireMode && ceasefireTransition > 0) {
+                ceasefireTransition = Math.max(0, ceasefireTransition - deltaTime * 0.003);
+            }
+            
+            // Update Present Moment state
+            const pm = presentMoment;
+            
+            pm.goodEnergy = Math.max(0, pm.goodEnergy - deltaTime * 0.0003);
+            pm.badEnergy = Math.max(0, pm.badEnergy - deltaTime * 0.0003);
+            pm.shakeIntensity = Math.max(0, pm.shakeIntensity - deltaTime * 0.002);
+            pm.glowIntensity = Math.max(0, pm.glowIntensity - deltaTime * 0.001);
+            pm.hitFlash = Math.max(0, pm.hitFlash - deltaTime * 0.005);
+            
+            if (ceasefireMode) {
+                pm.calmness = Math.min(1, pm.calmness + deltaTime * 0.0005);
+                pm.goodEnergy = Math.max(0, pm.goodEnergy - deltaTime * 0.001);
+                pm.badEnergy = Math.max(0, pm.badEnergy - deltaTime * 0.001);
+            } else {
+                pm.calmness = Math.max(0, pm.calmness - deltaTime * 0.002);
+            }
+            
+            const chaosLevel = (pm.goodEnergy + pm.badEnergy) / 2;
+            pm.currentRadius = pm.baseRadius + chaosLevel * 10;
+            
+            // Update units
+            units.forEach(unit => {
+                if (ceasefireMode) {
+                    // Retreat toward edges
+                    const retreatX = unit.x < 300 ? -100 : 700;
+                    const dx = retreatX - unit.x;
+                    unit.x += dx * 0.002 * deltaTime;
+                    
+                    unit.opacity = Math.max(0, unit.opacity - 0.001 * deltaTime);
+                    
+                    // Rogue behavior
+                    if (unit.isRogue && unit.opacity > 0.3 && Math.random() < 0.0001 * deltaTime * firingIntensity) {
+                        fireProjectile(unit);
+                        createThoughtBubble(unit.x, unit.y);
+                    }
+                } else {
+                    unit.opacity = Math.min(1, unit.opacity + 0.005 * deltaTime);
+                    
+                    // Return to home
+                    const dx = unit.homeX - unit.x;
+                    const dy = unit.homeY - unit.y;
+                    unit.x += dx * 0.01;
+                    unit.y += dy * 0.01;
+                    
+                    // Fire based on weight and intensity
+                    unit.framesSinceFired++;
+                    const effectiveFireRate = unit.baseFireRate / firingIntensity;
+                    
+                    if (unit.framesSinceFired >= effectiveFireRate) {
+                        fireProjectile(unit);
+                        unit.framesSinceFired = 0;
+                    }
+                }
+            });
+            
+            // Mark rogues during ceasefire
+            if (ceasefireMode && units.filter(u => u.isRogue).length === 0) {
+                const activeUnits = units.filter(u => u.opacity > 0.5);
+                if (activeUnits.length > 0) {
+                    const numRogues = Math.min(2, activeUnits.length);
+                    for (let i = 0; i < numRogues; i++) {
+                        const rogue = activeUnits[Math.floor(Math.random() * activeUnits.length)];
+                        rogue.isRogue = true;
+                    }
+                }
+            }
+            
+            if (!ceasefireMode) {
+                units.forEach(u => u.isRogue = false);
+            }
+            
+            // Update projectiles
+            projectiles.forEach(proj => {
+                const elapsed = now - proj.startTime;
+                if (elapsed >= proj.duration) {
+                    createImpact(proj.targetX, proj.targetY, proj.side, proj.size);
+                }
+            });
+            
+            projectiles = projectiles.filter(proj => {
+                const elapsed = now - proj.startTime;
+                return elapsed < proj.duration;
+            });
+            
+            impacts = impacts.filter(impact => {
+                const elapsed = now - impact.startTime;
+                return elapsed < impact.duration;
+            });
+            
+            thoughtBubbles = thoughtBubbles.filter(bubble => {
+                const elapsed = now - bubble.startTime;
+                return elapsed < bubble.duration;
+            });
+            
+            units = units.filter(u => u.opacity > 0.01);
+        }
+        
+        function render() {
+            drawIsland();
+            drawPresentMoment();
+            drawUnits();
+            drawProjectiles();
+            drawImpacts();
+            drawThoughtBubbles();
+        }
+        
+        function gameLoop(timestamp) {
+            update(timestamp);
+            render();
+            animationFrame = requestAnimationFrame(gameLoop);
+        }
+        
+        // ===== HELPERS =====
+        function lerpColor(color1, color2, t) {
+            const c1 = hexToRgb(color1);
+            const c2 = hexToRgb(color2);
+            const r = Math.round(c1.r + (c2.r - c1.r) * t);
+            const g = Math.round(c1.g + (c2.g - c1.g) * t);
+            const b = Math.round(c1.b + (c2.b - c1.b) * t);
+            return `rgb(${r},${g},${b})`;
+        }
+        
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 0, g: 0, b: 0 };
+        }
+        
+        // ===== UI LOGIC =====
+        function updateDisplay() {
+            const goodUnits = units.filter(u => u.side === 'good').length;
+            const badUnits = units.filter(u => u.side === 'bad').length;
+            
+            const scoreText = document.getElementById('score-text');
+            
+            if (ceasefireMode) {
+                scoreText.textContent = '🕊️ Finding Peace';
+                scoreText.className = 'winning neutral';
+            } else if (thoughts.length === 0) {
+                scoreText.textContent = 'Add thoughts to see your Mind Field';
+                scoreText.className = 'winning neutral';
+            } else if (goodUnits > badUnits) {
+                scoreText.textContent = `More positive fire (${goodUnits} vs ${badUnits} units)`;
+                scoreText.className = 'winning good';
+            } else if (badUnits > goodUnits) {
+                scoreText.textContent = `More negative fire (${badUnits} vs ${goodUnits} units)`;
+                scoreText.className = 'winning bad';
+            } else {
+                scoreText.textContent = `Equal crossfire (${goodUnits} each side)`;
+                scoreText.className = 'winning neutral';
+            }
+        }
+        
+        function updateThoughtsList() {
+            const list = document.getElementById('thoughts-list');
+            
+            if (thoughts.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">💭</div>
+                        <div>No thoughts yet. Add what's on your mind.</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = thoughts.map(t => {
+                const typeIcon = t.type === 'past' ? '⏮️' : '⏭️';
+                const weightLabel = WEIGHT_CONFIGS[t.weight].label;
+                const diagnosticTag = t.isDiagnostic ? '<span class="diagnostic-tag">diagnostic</span>' : '';
+                const truncatedText = t.text.length > 30 ? t.text.substring(0, 30) + '...' : t.text;
+                return `
+                    <div class="thought-item ${t.valence} ${t.isDiagnostic ? 'diagnostic' : ''}">
+                        <span class="thought-text">${truncatedText}${diagnosticTag}</span>
+                        <span class="thought-meta">${typeIcon} ${weightLabel}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function addThought() {
+            const input = document.getElementById('thought-input');
+            const text = input.value.trim();
+            
+            if (!text) {
+                input.focus();
+                return;
+            }
+            
+            const type = document.querySelector('#type-group .radio-option.selected').dataset.value;
+            const valence = document.querySelector('#valence-group .radio-option.selected').dataset.value;
+            const weight = parseInt(document.getElementById('weight-slider').value);
+            
+            const thought = {
+                id: Date.now(),
+                text: text,
+                type: type,
+                valence: valence,
+                weight: weight,
+                isDiagnostic: false
+            };
+            
+            thoughts.push(thought);
+            spawnUnitsForThought(thought);
+            
+            input.value = '';
+            input.focus();
+            
+            updateThoughtsList();
+            updateDisplay();
+            
+            // Exit ceasefire if active
+            if (ceasefireMode) {
+                toggleCeasefire();
+            }
+        }
+        
+        function toggleCeasefire() {
+            ceasefireMode = !ceasefireMode;
+            const btn = document.getElementById('ceasefire-btn');
+            
+            if (ceasefireMode) {
+                btn.textContent = '⚔️ Resume';
+                btn.classList.add('active');
+            } else {
+                btn.textContent = '🕊️ Ceasefire';
+                btn.classList.remove('active');
+                
+                // Respawn units for existing thoughts
+                units = [];
+                thoughts.forEach(thought => {
+                    spawnUnitsForThought(thought);
+                });
+                
+                presentMoment.calmness = 0;
+            }
+            
+            updateDisplay();
+        }
+        
+        function clearAll() {
+            thoughts = [];
+            units = [];
+            projectiles = [];
+            impacts = [];
+            thoughtBubbles = [];
+            ceasefireMode = false;
+            ceasefireTransition = 0;
+            
+            presentMoment.goodEnergy = 0;
+            presentMoment.badEnergy = 0;
+            presentMoment.shakeIntensity = 0;
+            presentMoment.glowIntensity = 0;
+            presentMoment.hitFlash = 0;
+            presentMoment.calmness = 0;
+            presentMoment.currentRadius = presentMoment.baseRadius;
+            
+            document.getElementById('ceasefire-btn').textContent = '🕊️ Ceasefire';
+            document.getElementById('ceasefire-btn').classList.remove('active');
+            
+            updateThoughtsList();
+            updateDisplay();
+        }
+        
+        // ===== EVENT LISTENERS =====
+        function setupEventListeners() {
+            // Start button
+            document.getElementById('start-btn').addEventListener('click', startDiagnostic);
+            
+            // Answer buttons
+            document.getElementById('true-btn').addEventListener('click', () => answerQuestion(true));
+            document.getElementById('false-btn').addEventListener('click', () => answerQuestion(false));
+            
+            // Dismiss transition message
+            document.getElementById('dismiss-transition').addEventListener('click', dismissTransition);
+            
+            // Radio button groups
+            document.querySelectorAll('.radio-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const group = this.parentElement;
+                    group.querySelectorAll('.radio-option').forEach(opt => {
+                        opt.classList.remove('selected', 'good', 'bad');
+                    });
+                    this.classList.add('selected');
+                    
+                    // Add color class for valence
+                    if (group.id === 'valence-group') {
+                        this.classList.add(this.dataset.value);
+                    }
+                    
+                    this.querySelector('input').checked = true;
+                });
+            });
+            
+            // Weight slider
+            const weightSlider = document.getElementById('weight-slider');
+            const weightDisplay = document.getElementById('weight-display');
+            weightSlider.addEventListener('input', function() {
+                weightDisplay.textContent = WEIGHT_CONFIGS[this.value].label;
+            });
+            
+            // Intensity slider
+            const intensitySlider = document.getElementById('intensity-slider');
+            const intensityDisplay = document.getElementById('intensity-display');
+            intensitySlider.addEventListener('input', function() {
+                firingIntensity = parseFloat(this.value);
+                intensityDisplay.textContent = firingIntensity.toFixed(1) + 'x';
+            });
+            
+            // Add thought button
+            document.getElementById('add-thought-btn').addEventListener('click', addThought);
+            
+            // Enter key to add
+            document.getElementById('thought-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addThought();
+                }
+            });
+            
+            // Ceasefire and clear buttons
+            document.getElementById('ceasefire-btn').addEventListener('click', toggleCeasefire);
+            document.getElementById('clear-btn').addEventListener('click', clearAll);
+            
+            // Keyboard shortcuts for questions
+            document.addEventListener('keydown', function(e) {
+                if (phase === 'questions') {
+                    if (e.key === 'ArrowLeft' || e.key === 't' || e.key === 'T' || e.key === '1') {
+                        answerQuestion(true);
+                    } else if (e.key === 'ArrowRight' || e.key === 'f' || e.key === 'F' || e.key === '2') {
+                        answerQuestion(false);
+                    }
+                }
+            });
+        }
+        
+        // ===== INIT =====
+        function init() {
+            setupEventListeners();
+        }
+        
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind Field - Prototype v2</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        
+        .subtitle {
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+        
+        #canvas-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        canvas {
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        
+        #legend {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+        
+        .legend-dot.good { background: #4a9eff; }
+        .legend-dot.bad { background: #ff4a6a; }
+        .legend-dot.neutral { background: #666; }
+        
+        #score-display {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            padding: 15px 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        #score-display .winning {
+            font-weight: bold;
+        }
+        
+        #score-display .winning.good { color: #4a9eff; }
+        #score-display .winning.bad { color: #ff4a6a; }
+        #score-display .winning.neutral { color: #888; }
+        
+        #question-container {
+            background: rgba(255,255,255,0.05);
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        #question-number {
+            color: #888;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+        
+        #question-text {
+            font-size: 1.3rem;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 12px 40px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .btn-true {
+            background: #4a9eff;
+            color: white;
+        }
+        
+        .btn-true:hover {
+            background: #3a8eef;
+        }
+        
+        .btn-false {
+            background: #ff4a6a;
+            color: white;
+        }
+        
+        .btn-false:hover {
+            background: #ef3a5a;
+        }
+        
+        .btn-ceasefire {
+            background: #444;
+            color: white;
+            margin-top: 15px;
+        }
+        
+        .btn-ceasefire:hover {
+            background: #555;
+        }
+        
+        .btn-ceasefire.active {
+            background: #9b59b6;
+        }
+        
+        .btn-restart {
+            background: #333;
+            color: #aaa;
+            margin-top: 15px;
+        }
+        
+        .btn-restart:hover {
+            background: #444;
+            color: #fff;
+        }
+        
+        #results {
+            text-align: center;
+            max-width: 500px;
+        }
+        
+        #results h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        #results p {
+            color: #aaa;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Progress bar */
+        #progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        #progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4a9eff, #9b59b6);
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏝️ Mind Field</h1>
+    <p class="subtitle">See the battle for your mental territory</p>
+    
+    <div id="canvas-container">
+        <canvas id="battlefield" width="600" height="400"></canvas>
+    </div>
+    
+    <div id="legend">
+        <div class="legend-item">
+            <div class="legend-dot good"></div>
+            <span>Good Forces</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot bad"></div>
+            <span>Bad Forces</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot neutral"></div>
+            <span>Neutral</span>
+        </div>
+    </div>
+    
+    <div id="score-display">
+        Territory: <span id="score-text" class="winning neutral">Balanced</span>
+    </div>
+    
+    <div id="question-container">
+        <div id="progress-bar">
+            <div id="progress-fill" style="width: 0%"></div>
+        </div>
+        <div id="question-number">Question 1 of 5</div>
+        <div id="question-text">Loading...</div>
+        <div class="btn-group">
+            <button class="btn-true" onclick="answer(true)">True ✓</button>
+            <button class="btn-false" onclick="answer(false)">False ✗</button>
+        </div>
+    </div>
+    
+    <div id="results" class="hidden">
+        <h2 id="results-title">Battle Complete</h2>
+        <p id="results-text"></p>
+        <button class="btn-ceasefire" onclick="toggleCeasefire()">
+            🕊️ Ceasefire Mode
+        </button>
+        <button class="btn-restart" onclick="restart()">Start Over</button>
+    </div>
+
+    <script>
+        // ===== STATE =====
+        const questions = [
+            "People are thankful today",
+            "I'm having a good day",
+            "It is beautiful out",
+            "I'm in control right now",
+            "I'm looking forward to something"
+        ];
+        
+        let currentQuestion = 0;
+        let answers = []; // true = good, false = bad
+        let territories = [0, 0, 0, 0, 0]; // -1 = bad, 0 = neutral, 1 = good
+        let ceasefireMode = false;
+        let ceasefireTransition = 0; // 0-1 for smooth transition
+        let animationFrame;
+        let lastTime = 0;
+        
+        // ===== UNIT & COMBAT SYSTEM =====
+        let units = [];
+        let projectiles = [];
+        let impacts = [];
+        let thoughtBubbles = [];
+        
+        const UNIT_TYPES = {
+            infantry: { size: 5, speed: 0.3, fireRate: 2000, shape: 'circle' },
+            tank: { size: 10, speed: 0.15, fireRate: 3000, shape: 'square' },
+            scout: { size: 4, speed: 0.6, fireRate: 1500, shape: 'triangle' }
+        };
+        
+        // ===== CANVAS SETUP =====
+        const canvas = document.getElementById('battlefield');
+        const ctx = canvas.getContext('2d');
+        
+        // Territory regions (5 areas on the island)
+        const regions = [
+            { name: "North Peak", cx: 300, cy: 80, points: [[200, 50], [400, 50], [380, 130], [220, 130]] },
+            { name: "West Woods", cx: 120, cy: 200, points: [[50, 120], [200, 100], [220, 280], [80, 300]] },
+            { name: "Central Plains", cx: 300, cy: 200, points: [[200, 130], [400, 130], [420, 280], [180, 280]] },
+            { name: "East Hills", cx: 480, cy: 200, points: [[400, 100], [550, 120], [520, 300], [380, 280]] },
+            { name: "South Shore", cx: 300, cy: 340, points: [[150, 280], [450, 280], [400, 380], [200, 380]] }
+        ];
+        
+        // ===== COLORS =====
+        const colors = {
+            good: '#4a9eff',
+            goodDark: '#2a5e9f',
+            goodLight: '#7ab8ff',
+            bad: '#ff4a6a',
+            badDark: '#9f2a3a',
+            badLight: '#ff7a8a',
+            neutral: '#555',
+            neutralDark: '#333',
+            water: '#1a1a2e',
+            waterDeep: '#0f0f1a'
+        };
+        
+        // ===== UNIT MANAGEMENT =====
+        function createUnit(side, regionIndex) {
+            const region = regions[regionIndex];
+            const types = ['infantry', 'infantry', 'infantry', 'tank', 'scout', 'scout'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const config = UNIT_TYPES[type];
+            
+            // Random position within region bounds
+            const offsetX = (Math.random() - 0.5) * 60;
+            const offsetY = (Math.random() - 0.5) * 40;
+            
+            return {
+                x: region.cx + offsetX,
+                y: region.cy + offsetY,
+                homeX: region.cx + offsetX,
+                homeY: region.cy + offsetY,
+                regionIndex: regionIndex,
+                side: side, // 'good' or 'bad'
+                type: type,
+                size: config.size,
+                speed: config.speed,
+                fireRate: config.fireRate + Math.random() * 1000,
+                shape: config.shape,
+                lastFired: Date.now() + Math.random() * config.fireRate,
+                opacity: 1,
+                isRogue: false,
+                wobble: Math.random() * Math.PI * 2
+            };
+        }
+        
+        function spawnUnitsForAnswer(isGood, regionIndex) {
+            const side = isGood ? 'good' : 'bad';
+            const numUnits = 2 + Math.floor(Math.random() * 2); // 2-3 units
+            
+            for (let i = 0; i < numUnits; i++) {
+                units.push(createUnit(side, regionIndex));
+            }
+        }
+        
+        function fireProjectile(unit) {
+            // Find enemy territory to target
+            const enemySide = unit.side === 'good' ? -1 : 1;
+            const enemyRegions = territories
+                .map((t, i) => ({ t, i }))
+                .filter(({ t }) => t === enemySide);
+            
+            if (enemyRegions.length === 0) return;
+            
+            const targetRegion = regions[enemyRegions[Math.floor(Math.random() * enemyRegions.length)].i];
+            const targetX = targetRegion.cx + (Math.random() - 0.5) * 40;
+            const targetY = targetRegion.cy + (Math.random() - 0.5) * 30;
+            
+            // Calculate trajectory
+            const dx = targetX - unit.x;
+            const dy = targetY - unit.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const duration = dist * 3 + 500; // Slower for arc effect
+            
+            projectiles.push({
+                startX: unit.x,
+                startY: unit.y,
+                targetX: targetX,
+                targetY: targetY,
+                x: unit.x,
+                y: unit.y,
+                side: unit.side,
+                startTime: Date.now(),
+                duration: duration,
+                arcHeight: dist * 0.15
+            });
+        }
+        
+        function createImpact(x, y, side) {
+            impacts.push({
+                x: x,
+                y: y,
+                side: side,
+                startTime: Date.now(),
+                duration: 400
+            });
+        }
+        
+        function createThoughtBubble(x, y) {
+            const thoughts = [
+                "💭", "...", "🤔", "😅", "oops", "!!", "whoops"
+            ];
+            thoughtBubbles.push({
+                x: x,
+                y: y - 20,
+                text: thoughts[Math.floor(Math.random() * thoughts.length)],
+                startTime: Date.now(),
+                duration: 1500
+            });
+        }
+        
+        // ===== DRAWING =====
+        function drawIsland() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw water
+            ctx.fillStyle = colors.water;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw island base (outer glow)
+            ctx.beginPath();
+            ctx.moveTo(100, 200);
+            ctx.bezierCurveTo(80, 100, 200, 30, 300, 50);
+            ctx.bezierCurveTo(400, 30, 520, 100, 500, 200);
+            ctx.bezierCurveTo(550, 300, 450, 400, 300, 380);
+            ctx.bezierCurveTo(150, 400, 50, 300, 100, 200);
+            ctx.closePath();
+            
+            ctx.fillStyle = '#2a2a3e';
+            ctx.fill();
+            
+            // Draw each territory
+            regions.forEach((region, i) => {
+                drawTerritory(region, territories[i]);
+            });
+            
+            // Draw territory borders
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+            ctx.lineWidth = 1;
+            regions.forEach(region => {
+                ctx.beginPath();
+                ctx.moveTo(region.points[0][0], region.points[0][1]);
+                for (let j = 1; j < region.points.length; j++) {
+                    ctx.lineTo(region.points[j][0], region.points[j][1]);
+                }
+                ctx.closePath();
+                ctx.stroke();
+            });
+            
+            // Draw coastline
+            ctx.beginPath();
+            ctx.moveTo(100, 200);
+            ctx.bezierCurveTo(80, 100, 200, 30, 300, 50);
+            ctx.bezierCurveTo(400, 30, 520, 100, 500, 200);
+            ctx.bezierCurveTo(550, 300, 450, 400, 300, 380);
+            ctx.bezierCurveTo(150, 400, 50, 300, 100, 200);
+            ctx.closePath();
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Draw region labels
+            ctx.font = '11px sans-serif';
+            ctx.textAlign = 'center';
+            regions.forEach((region, i) => {
+                const state = territories[i];
+                ctx.fillStyle = state === 0 ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.7)';
+                ctx.fillText(region.name, region.cx, region.cy + 40);
+            });
+        }
+        
+        function drawTerritory(region, state) {
+            let fillColor;
+            
+            // Handle ceasefire transition
+            if (ceasefireMode || ceasefireTransition > 0) {
+                const t = ceasefireTransition;
+                if (state === 1) {
+                    fillColor = lerpColor(colors.good, colors.neutral, t);
+                } else if (state === -1) {
+                    fillColor = lerpColor(colors.bad, colors.neutral, t);
+                } else {
+                    fillColor = colors.neutral;
+                }
+            } else if (state === 1) {
+                fillColor = colors.good;
+            } else if (state === -1) {
+                fillColor = colors.bad;
+            } else {
+                fillColor = colors.neutral;
+            }
+            
+            ctx.beginPath();
+            ctx.moveTo(region.points[0][0], region.points[0][1]);
+            for (let i = 1; i < region.points.length; i++) {
+                ctx.lineTo(region.points[i][0], region.points[i][1]);
+            }
+            ctx.closePath();
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+        }
+        
+        function drawUnits() {
+            units.forEach(unit => {
+                if (unit.opacity <= 0) return;
+                
+                ctx.save();
+                ctx.globalAlpha = unit.opacity;
+                
+                const baseColor = unit.side === 'good' ? colors.good : colors.bad;
+                const darkColor = unit.side === 'good' ? colors.goodDark : colors.badDark;
+                
+                ctx.translate(unit.x, unit.y);
+                
+                // Subtle wobble animation when active
+                if (!ceasefireMode && unit.opacity > 0.5) {
+                    const wobbleAmount = Math.sin(Date.now() * 0.003 + unit.wobble) * 1;
+                    ctx.translate(wobbleAmount, 0);
+                }
+                
+                if (unit.shape === 'circle') {
+                    // Infantry - small circle with inner dot
+                    ctx.beginPath();
+                    ctx.arc(0, 0, unit.size, 0, Math.PI * 2);
+                    ctx.fillStyle = baseColor;
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                } else if (unit.shape === 'square') {
+                    // Tank - square with turret
+                    ctx.fillStyle = darkColor;
+                    ctx.fillRect(-unit.size, -unit.size * 0.7, unit.size * 2, unit.size * 1.4);
+                    ctx.fillStyle = baseColor;
+                    ctx.fillRect(-unit.size * 0.6, -unit.size * 0.5, unit.size * 1.2, unit.size);
+                    // Turret
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(unit.size * 0.3, -2, unit.size * 0.8, 4);
+                } else if (unit.shape === 'triangle') {
+                    // Scout - triangle pointing right
+                    ctx.beginPath();
+                    ctx.moveTo(unit.size, 0);
+                    ctx.lineTo(-unit.size, -unit.size);
+                    ctx.lineTo(-unit.size, unit.size);
+                    ctx.closePath();
+                    ctx.fillStyle = baseColor;
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+                
+                ctx.restore();
+            });
+        }
+        
+        function drawProjectiles() {
+            const now = Date.now();
+            
+            projectiles.forEach(proj => {
+                const elapsed = now - proj.startTime;
+                const t = Math.min(elapsed / proj.duration, 1);
+                
+                // Parabolic arc
+                const x = proj.startX + (proj.targetX - proj.startX) * t;
+                const arcY = proj.arcHeight * Math.sin(t * Math.PI);
+                const y = proj.startY + (proj.targetY - proj.startY) * t - arcY;
+                
+                proj.x = x;
+                proj.y = y;
+                
+                const color = proj.side === 'good' ? colors.goodLight : colors.badLight;
+                
+                // Draw projectile with trail
+                ctx.save();
+                
+                // Trail
+                ctx.beginPath();
+                const trailLength = 15;
+                const prevT = Math.max(0, t - 0.1);
+                const trailX = proj.startX + (proj.targetX - proj.startX) * prevT;
+                const trailArcY = proj.arcHeight * Math.sin(prevT * Math.PI);
+                const trailY = proj.startY + (proj.targetY - proj.startY) * prevT - trailArcY;
+                
+                const gradient = ctx.createLinearGradient(trailX, trailY, x, y);
+                gradient.addColorStop(0, 'transparent');
+                gradient.addColorStop(1, color);
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 2;
+                ctx.moveTo(trailX, trailY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                
+                // Main projectile
+                ctx.beginPath();
+                ctx.arc(x, y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+                
+                // Glow
+                ctx.beginPath();
+                ctx.arc(x, y, 6, 0, Math.PI * 2);
+                ctx.fillStyle = color.replace('ff', '44');
+                ctx.fill();
+                
+                ctx.restore();
+            });
+        }
+        
+        function drawImpacts() {
+            const now = Date.now();
+            
+            impacts.forEach(impact => {
+                const elapsed = now - impact.startTime;
+                const t = elapsed / impact.duration;
+                
+                if (t >= 1) return;
+                
+                const color = impact.side === 'good' ? colors.good : colors.bad;
+                const radius = 5 + t * 20;
+                const opacity = 1 - t;
+                
+                ctx.save();
+                ctx.globalAlpha = opacity * 0.6;
+                
+                // Expanding ring
+                ctx.beginPath();
+                ctx.arc(impact.x, impact.y, radius, 0, Math.PI * 2);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3 * (1 - t);
+                ctx.stroke();
+                
+                // Inner flash
+                if (t < 0.3) {
+                    ctx.beginPath();
+                    ctx.arc(impact.x, impact.y, 8 * (1 - t * 3), 0, Math.PI * 2);
+                    ctx.fillStyle = '#fff';
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            });
+        }
+        
+        function drawThoughtBubbles() {
+            const now = Date.now();
+            
+            thoughtBubbles.forEach(bubble => {
+                const elapsed = now - bubble.startTime;
+                const t = elapsed / bubble.duration;
+                
+                if (t >= 1) return;
+                
+                const opacity = t < 0.2 ? t * 5 : (1 - (t - 0.2) / 0.8);
+                const y = bubble.y - t * 20;
+                
+                ctx.save();
+                ctx.globalAlpha = opacity;
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#fff';
+                ctx.fillText(bubble.text, bubble.x, y);
+                ctx.restore();
+            });
+        }
+        
+        // ===== ANIMATION LOOP =====
+        function update(timestamp) {
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+            
+            const now = Date.now();
+            
+            // Update ceasefire transition
+            if (ceasefireMode && ceasefireTransition < 1) {
+                ceasefireTransition = Math.min(1, ceasefireTransition + deltaTime * 0.002);
+            } else if (!ceasefireMode && ceasefireTransition > 0) {
+                ceasefireTransition = Math.max(0, ceasefireTransition - deltaTime * 0.003);
+            }
+            
+            // Update units
+            units.forEach(unit => {
+                if (ceasefireMode) {
+                    // Retreat toward edges
+                    const retreatX = unit.x < 300 ? -100 : 700;
+                    const dx = retreatX - unit.x;
+                    unit.x += dx * 0.002 * deltaTime;
+                    
+                    // Fade out
+                    unit.opacity = Math.max(0, unit.opacity - 0.001 * deltaTime);
+                    
+                    // Rogue unit behavior
+                    if (unit.isRogue && unit.opacity > 0.3 && Math.random() < 0.0001 * deltaTime) {
+                        fireProjectile(unit);
+                        createThoughtBubble(unit.x, unit.y);
+                    }
+                } else {
+                    // Normal combat behavior
+                    unit.opacity = Math.min(1, unit.opacity + 0.005 * deltaTime);
+                    
+                    // Return to home position
+                    const dx = unit.homeX - unit.x;
+                    const dy = unit.homeY - unit.y;
+                    unit.x += dx * 0.01;
+                    unit.y += dy * 0.01;
+                    
+                    // Fire at enemies
+                    if (now - unit.lastFired > unit.fireRate) {
+                        fireProjectile(unit);
+                        unit.lastFired = now;
+                    }
+                }
+            });
+            
+            // Mark some units as rogue when ceasefire starts
+            if (ceasefireMode && units.filter(u => u.isRogue).length === 0) {
+                const activeUnits = units.filter(u => u.opacity > 0.5);
+                if (activeUnits.length > 0) {
+                    // Pick 1-2 random units to be rogues
+                    const numRogues = Math.min(2, activeUnits.length);
+                    for (let i = 0; i < numRogues; i++) {
+                        const rogue = activeUnits[Math.floor(Math.random() * activeUnits.length)];
+                        rogue.isRogue = true;
+                    }
+                }
+            }
+            
+            // Reset rogue status when returning to combat
+            if (!ceasefireMode) {
+                units.forEach(u => u.isRogue = false);
+            }
+            
+            // Update projectiles
+            projectiles.forEach(proj => {
+                const elapsed = now - proj.startTime;
+                if (elapsed >= proj.duration) {
+                    createImpact(proj.targetX, proj.targetY, proj.side);
+                }
+            });
+            
+            // Remove completed projectiles
+            projectiles = projectiles.filter(proj => {
+                const elapsed = now - proj.startTime;
+                return elapsed < proj.duration;
+            });
+            
+            // Remove expired impacts
+            impacts = impacts.filter(impact => {
+                const elapsed = now - impact.startTime;
+                return elapsed < impact.duration;
+            });
+            
+            // Remove expired thought bubbles
+            thoughtBubbles = thoughtBubbles.filter(bubble => {
+                const elapsed = now - bubble.startTime;
+                return elapsed < bubble.duration;
+            });
+            
+            // Remove faded units
+            units = units.filter(u => u.opacity > 0.01);
+        }
+        
+        function render() {
+            drawIsland();
+            drawUnits();
+            drawProjectiles();
+            drawImpacts();
+            drawThoughtBubbles();
+        }
+        
+        function gameLoop(timestamp) {
+            update(timestamp);
+            render();
+            animationFrame = requestAnimationFrame(gameLoop);
+        }
+        
+        // ===== HELPERS =====
+        function lerpColor(color1, color2, t) {
+            // Simple hex color lerp
+            const c1 = hexToRgb(color1);
+            const c2 = hexToRgb(color2);
+            const r = Math.round(c1.r + (c2.r - c1.r) * t);
+            const g = Math.round(c1.g + (c2.g - c1.g) * t);
+            const b = Math.round(c1.b + (c2.b - c1.b) * t);
+            return `rgb(${r},${g},${b})`;
+        }
+        
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 0, g: 0, b: 0 };
+        }
+        
+        // ===== GAME LOGIC =====
+        function answer(isTrue) {
+            answers.push(isTrue);
+            territories[currentQuestion] = isTrue ? 1 : -1;
+            
+            // Spawn units for this answer
+            spawnUnitsForAnswer(isTrue, currentQuestion);
+            
+            currentQuestion++;
+            
+            updateDisplay();
+            
+            if (currentQuestion >= questions.length) {
+                showResults();
+            } else {
+                showQuestion();
+            }
+        }
+        
+        function showQuestion() {
+            document.getElementById('question-number').textContent = 
+                `Question ${currentQuestion + 1} of ${questions.length}`;
+            document.getElementById('question-text').textContent = 
+                `"${questions[currentQuestion]}"`;
+            document.getElementById('progress-fill').style.width = 
+                `${(currentQuestion / questions.length) * 100}%`;
+        }
+        
+        function updateDisplay() {
+            const goodCount = territories.filter(t => t === 1).length;
+            const badCount = territories.filter(t => t === -1).length;
+            
+            const scoreText = document.getElementById('score-text');
+            
+            if (ceasefireMode) {
+                scoreText.textContent = '🕊️ Ceasefire Active';
+                scoreText.className = 'winning neutral';
+            } else if (goodCount > badCount) {
+                scoreText.textContent = `Good Forces Lead (${goodCount}-${badCount})`;
+                scoreText.className = 'winning good';
+            } else if (badCount > goodCount) {
+                scoreText.textContent = `Bad Forces Lead (${badCount}-${goodCount})`;
+                scoreText.className = 'winning bad';
+            } else {
+                scoreText.textContent = 'Evenly Contested';
+                scoreText.className = 'winning neutral';
+            }
+        }
+        
+        function showResults() {
+            document.getElementById('question-container').classList.add('hidden');
+            document.getElementById('results').classList.remove('hidden');
+            document.getElementById('progress-fill').style.width = '100%';
+            
+            const goodCount = territories.filter(t => t === 1).length;
+            const badCount = territories.filter(t => t === -1).length;
+            
+            let title, text;
+            if (goodCount > badCount) {
+                title = "💙 Good Forces Dominate";
+                text = `Your good thoughts control ${goodCount} of 5 territories. The positive forces are winning today's battle for your mind. But remember: the war is eternal. Try ceasefire mode to experience peace beyond victory.`;
+            } else if (badCount > goodCount) {
+                title = "❤️ Bad Forces Dominate";
+                text = `Difficult thoughts control ${badCount} of 5 territories. The negative forces are winning right now. But here's the insight: fighting them makes them stronger. Try ceasefire mode—peace isn't about winning.`;
+            } else {
+                title = "⚖️ Evenly Contested";
+                text = "Your mind is a battlefield in balance—neither side winning. This constant conflict is exhausting. Try ceasefire mode to see what peace looks like.";
+            }
+            
+            document.getElementById('results-title').textContent = title;
+            document.getElementById('results-text').textContent = text;
+        }
+        
+        function toggleCeasefire() {
+            ceasefireMode = !ceasefireMode;
+            const btn = document.querySelector('.btn-ceasefire');
+            
+            if (ceasefireMode) {
+                btn.textContent = '⚔️ Resume Battle';
+                btn.classList.add('active');
+            } else {
+                btn.textContent = '🕊️ Ceasefire Mode';
+                btn.classList.remove('active');
+                
+                // Respawn units when resuming battle
+                units = [];
+                territories.forEach((state, i) => {
+                    if (state !== 0) {
+                        spawnUnitsForAnswer(state === 1, i);
+                    }
+                });
+            }
+            
+            updateDisplay();
+        }
+        
+        function restart() {
+            currentQuestion = 0;
+            answers = [];
+            territories = [0, 0, 0, 0, 0];
+            ceasefireMode = false;
+            ceasefireTransition = 0;
+            units = [];
+            projectiles = [];
+            impacts = [];
+            thoughtBubbles = [];
+            
+            document.getElementById('question-container').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+            document.querySelector('.btn-ceasefire').textContent = '🕊️ Ceasefire Mode';
+            document.querySelector('.btn-ceasefire').classList.remove('active');
+            
+            showQuestion();
+            updateDisplay();
+        }
+        
+        // ===== INIT =====
+        function init() {
+            showQuestion();
+            updateDisplay();
+            lastTime = performance.now();
+            animationFrame = requestAnimationFrame(gameLoop);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

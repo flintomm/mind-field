@@ -1,0 +1,3772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind Field v0.7.1 - Box Breathing + Meditated Mech</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        
+        .subtitle {
+            color: #888;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        
+        /* ===== DIAGNOSTIC SCREEN ===== */
+        #diagnostic-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 70vh;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        .welcome-title {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        
+        .welcome-subtitle {
+            font-size: 1.1rem;
+            color: #888;
+            margin-bottom: 40px;
+        }
+        
+        #start-btn {
+            padding: 18px 50px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background: linear-gradient(135deg, #9b59b6, #6b3fa0);
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(155, 89, 182, 0.4);
+        }
+        
+        #start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 30px rgba(155, 89, 182, 0.6);
+        }
+        
+        /* Question Container */
+        #question-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .progress-container {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .progress-text {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #9b59b6, #c39bd3);
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+        
+        .question-text {
+            font-size: 1.6rem;
+            color: #fff;
+            margin-bottom: 40px;
+            line-height: 1.4;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease;
+        }
+        
+        .question-text.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .answer-buttons {
+            display: flex;
+            gap: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease 0.2s;
+        }
+        
+        .answer-buttons.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .answer-btn {
+            padding: 20px 60px;
+            font-size: 1.3rem;
+            border: 3px solid;
+            border-radius: 12px;
+            cursor: pointer;
+            background: transparent;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .answer-btn.true-btn {
+            border-color: #4a9eff;
+            color: #4a9eff;
+        }
+        
+        .answer-btn.true-btn:hover {
+            background: rgba(74, 158, 255, 0.2);
+            transform: scale(1.05);
+        }
+        
+        .answer-btn.false-btn {
+            border-color: #ff4a6a;
+            color: #ff4a6a;
+        }
+        
+        .answer-btn.false-btn:hover {
+            background: rgba(255, 74, 106, 0.2);
+            transform: scale(1.05);
+        }
+        
+        .answer-btn:active {
+            transform: scale(0.98);
+        }
+        
+        /* Building Screen */
+        #building-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 70vh;
+            text-align: center;
+        }
+        
+        .building-text {
+            font-size: 1.8rem;
+            color: #fff;
+            margin-bottom: 30px;
+        }
+        
+        .building-loader {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .building-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #9b59b6;
+            animation: buildingPulse 1.4s ease-in-out infinite;
+        }
+        
+        .building-dot:nth-child(2) { animation-delay: 0.2s; }
+        .building-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes buildingPulse {
+            0%, 100% { transform: scale(0.8); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+        
+        /* Transition Message */
+        #transition-message {
+            display: none;
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(155, 89, 182, 0.95);
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            color: #fff;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+            z-index: 100;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        #transition-message.visible {
+            opacity: 1;
+        }
+        
+        #transition-message .dismiss-btn {
+            display: block;
+            margin-top: 15px;
+            padding: 8px 20px;
+            font-size: 0.9rem;
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 8px;
+            background: transparent;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        #transition-message .dismiss-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: #fff;
+        }
+        
+        /* ===== SYSTEM NOTIFICATION ===== */
+        #system-notification {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(40, 40, 60, 0.95);
+            border: 1px solid rgba(155, 89, 182, 0.5);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: #c39bd3;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s ease;
+        }
+        
+        #system-notification.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        #system-notification.good-counter {
+            border-color: rgba(74, 158, 255, 0.5);
+            color: #7ab8ff;
+        }
+        
+        #system-notification.bad-counter {
+            border-color: rgba(255, 74, 106, 0.5);
+            color: #ff7a8a;
+        }
+        
+        #system-notification.mech-notification {
+            border-color: rgba(245, 215, 110, 0.6);
+            color: #F5D76E;
+            background: rgba(40, 40, 30, 0.95);
+        }
+        
+        #system-notification.battle-resuming {
+            border-color: rgba(255, 165, 0, 0.5);
+            color: #ffa500;
+        }
+        
+        /* ===== BALANCE DISPLAY ===== */
+        #balance-display {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.4);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            display: flex;
+            gap: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        #balance-display.visible {
+            opacity: 1;
+        }
+        
+        .balance-good {
+            color: #4a9eff;
+        }
+        
+        .balance-bad {
+            color: #ff4a6a;
+        }
+        
+        .balance-bar {
+            width: 80px;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+            display: flex;
+        }
+        
+        .balance-bar-good {
+            background: #4a9eff;
+            transition: width 0.3s;
+        }
+        
+        .balance-bar-bad {
+            background: #ff4a6a;
+            transition: width 0.3s;
+        }
+        
+        /* ===== MECH INDICATOR ===== */
+        #mech-indicator {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(245, 215, 110, 0.15);
+            border: 1px solid rgba(245, 215, 110, 0.4);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: #F5D76E;
+            display: none;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        #mech-indicator.visible {
+            display: flex;
+        }
+        
+        /* ===== v0.7 MEDITATION BREATHING PROMPT ===== */
+        #breath-prompt {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 50;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        #breath-prompt.visible {
+            opacity: 1;
+        }
+        
+        #breath-text {
+            font-size: 2rem;
+            font-weight: 300;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(245, 215, 110, 0.6);
+            letter-spacing: 2px;
+        }
+        
+        #breath-cycle {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 10px;
+        }
+        
+        /* Post-meditation message */
+        #meditation-complete {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 50;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        
+        #meditation-complete.visible {
+            opacity: 1;
+        }
+        
+        #meditation-complete .peace-message {
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: #F5D76E;
+            text-shadow: 0 0 30px rgba(245, 215, 110, 0.5);
+            margin-bottom: 10px;
+        }
+        
+        #meditation-complete .peace-sub {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        /* ===== MAIN GAME AREA (initially hidden) ===== */
+        #game-area {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        #game-area.visible {
+            opacity: 1;
+        }
+        
+        .main-container {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        #canvas-container {
+            position: relative;
+        }
+        
+        canvas {
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        
+        /* Quadrant labels on canvas */
+        .quadrant-labels {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            top: 0;
+            left: 0;
+        }
+        
+        .quadrant-label {
+            position: absolute;
+            font-size: 10px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .ql-tl { top: 15px; left: 20px; }
+        .ql-tr { top: 15px; right: 20px; text-align: right; }
+        .ql-bl { bottom: 15px; left: 20px; }
+        .ql-br { bottom: 15px; right: 20px; text-align: right; }
+        
+        /* Input Panel */
+        #input-panel {
+            background: rgba(255,255,255,0.05);
+            padding: 25px;
+            border-radius: 12px;
+            width: 320px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            opacity: 0;
+            transform: translateX(30px);
+            transition: all 0.5s ease 0.3s;
+        }
+        
+        #input-panel.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        #input-panel h2 {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .input-group {
+            margin-bottom: 18px;
+        }
+        
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+        
+        #thought-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            background: #2a2a3e;
+            color: #fff;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        
+        #thought-input:focus {
+            outline: none;
+            border-color: #9b59b6;
+        }
+        
+        #thought-input::placeholder {
+            color: #666;
+        }
+        
+        /* Radio buttons */
+        .radio-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .radio-option {
+            flex: 1;
+            padding: 10px;
+            background: #2a2a3e;
+            border: 2px solid #333;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        
+        .radio-option:hover {
+            border-color: #555;
+        }
+        
+        .radio-option.selected {
+            border-color: #9b59b6;
+            background: rgba(155, 89, 182, 0.2);
+        }
+        
+        .radio-option.selected.good {
+            border-color: #4a9eff;
+            background: rgba(74, 158, 255, 0.2);
+        }
+        
+        .radio-option.selected.bad {
+            border-color: #ff4a6a;
+            background: rgba(255, 74, 106, 0.2);
+        }
+        
+        .radio-option input {
+            display: none;
+        }
+        
+        /* Weight slider */
+        .weight-slider-container {
+            padding: 10px;
+            background: #2a2a3e;
+            border-radius: 8px;
+        }
+        
+        .weight-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        
+        .weight-value {
+            text-align: center;
+            font-weight: bold;
+            color: #9b59b6;
+            margin-top: 8px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #333;
+            border-radius: 4px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #9b59b6;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #b369d6;
+        }
+        
+        #add-thought-btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #9b59b6;
+            color: white;
+            font-weight: 600;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+        
+        #add-thought-btn:hover {
+            background: #b369d6;
+            transform: translateY(-2px);
+        }
+        
+        #add-thought-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* Intensity slider */
+        .intensity-section {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+        
+        .intensity-section h3 {
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .intensity-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #f39c12;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .intensity-status {
+            font-size: 0.75rem;
+            color: #888;
+            text-align: center;
+            margin-top: 5px;
+        }
+        
+        /* Controls section */
+        .controls-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-ceasefire {
+            flex: 1;
+            padding: 12px;
+            font-size: 0.9rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #444;
+            color: white;
+            transition: all 0.2s;
+        }
+        
+        .btn-ceasefire:hover {
+            background: #555;
+        }
+        
+        .btn-ceasefire.active {
+            background: linear-gradient(135deg, #9b59b6, #F5D76E);
+        }
+        
+        .btn-ceasefire.meditation-active {
+            background: linear-gradient(135deg, #9b59b6, #F5D76E);
+            animation: meditationPulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes meditationPulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(245, 215, 110, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(245, 215, 110, 0.6); }
+        }
+        
+        .btn-clear {
+            flex: 1;
+            padding: 12px;
+            font-size: 0.9rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #333;
+            color: #aaa;
+            transition: all 0.2s;
+        }
+        
+        .btn-clear:hover {
+            background: #444;
+            color: #fff;
+        }
+        
+        /* Score display */
+        #score-display {
+            font-size: 1.1rem;
+            margin-top: 15px;
+            padding: 12px 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        #score-display .winning {
+            font-weight: bold;
+        }
+        
+        #score-display .winning.good { color: #4a9eff; }
+        #score-display .winning.bad { color: #ff4a6a; }
+        #score-display .winning.neutral { color: #888; }
+        #score-display .winning.peaceful { color: #F5D76E; }
+        
+        /* Legend */
+        #legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            font-size: 0.8rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+        
+        .legend-dot.good { background: #4a9eff; }
+        .legend-dot.bad { background: #ff4a6a; }
+        .legend-dot.present { 
+            background: radial-gradient(circle, #fff 30%, #9b59b6 100%);
+            border-radius: 50%;
+        }
+        .legend-dot.mech {
+            background: #F5D76E;
+            clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+        }
+        
+        /* Thoughts list */
+        #thoughts-list {
+            margin-top: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+        }
+        
+        .thought-item {
+            padding: 8px 10px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            background: rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .thought-item.good { border-left: 3px solid #4a9eff; }
+        .thought-item.bad { border-left: 3px solid #ff4a6a; }
+        
+        /* System-spawned thoughts */
+        .thought-item.system-spawned {
+            background: rgba(155, 89, 182, 0.15);
+            border-left-style: dashed;
+        }
+        
+        .thought-item.system-spawned.good {
+            border-left-color: #7ab8ff;
+        }
+        
+        .thought-item.system-spawned.bad {
+            border-left-color: #ff7a8a;
+        }
+        
+        /* Meditated Mech thought item */
+        .thought-item.mech-item {
+            background: rgba(245, 215, 110, 0.15);
+            border-left: 3px solid #F5D76E;
+        }
+        
+        .thought-text {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .thought-meta {
+            color: #666;
+            font-size: 0.7rem;
+            margin-left: 10px;
+        }
+        
+        .thought-meta.mech-meta {
+            color: #F5D76E;
+        }
+        
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+        
+        .empty-state .icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        /* Diagnostic tag for thoughts from questions */
+        .thought-item.diagnostic {
+            background: rgba(155, 89, 182, 0.15);
+        }
+        
+        .diagnostic-tag {
+            font-size: 0.65rem;
+            background: rgba(155, 89, 182, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 5px;
+            color: #c39bd3;
+        }
+        
+        .system-tag {
+            font-size: 0.65rem;
+            background: rgba(100, 100, 140, 0.4);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 5px;
+            color: #aaa;
+        }
+        
+        @media (max-width: 900px) {
+            .main-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            #input-panel {
+                width: 100%;
+                max-width: 400px;
+            }
+            
+            .answer-btn {
+                padding: 16px 40px;
+                font-size: 1.1rem;
+            }
+            
+            .question-text {
+                font-size: 1.3rem;
+                padding: 0 20px;
+            }
+            
+            #breath-text {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== DIAGNOSTIC SCREEN ===== -->
+    <div id="diagnostic-screen">
+        <div id="welcome-screen">
+            <div class="welcome-title">🏝️ Mind Field</div>
+            <p class="welcome-subtitle">Answer 8 quick questions to see what's firing at you.</p>
+            <button id="start-btn">Begin</button>
+        </div>
+        
+        <div id="question-container">
+            <div class="progress-container">
+                <div class="progress-text">Question <span id="question-num">1</span> of 8</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 12.5%"></div>
+                </div>
+            </div>
+            
+            <div class="question-text" id="question-text"></div>
+            
+            <div class="answer-buttons" id="answer-buttons">
+                <button class="answer-btn true-btn" id="true-btn">True</button>
+                <button class="answer-btn false-btn" id="false-btn">False</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ===== BUILDING SCREEN ===== -->
+    <div id="building-screen">
+        <div class="building-text">Building your Mind Field...</div>
+        <div class="building-loader">
+            <div class="building-dot"></div>
+            <div class="building-dot"></div>
+            <div class="building-dot"></div>
+        </div>
+    </div>
+    
+    <!-- ===== TRANSITION MESSAGE ===== -->
+    <div id="transition-message">
+        <div>This is what's firing at your present moment.</div>
+        <div style="margin-top: 8px; font-size: 0.95rem; opacity: 0.9;">Want to add more?</div>
+        <button class="dismiss-btn" id="dismiss-transition">Got it →</button>
+    </div>
+    
+    <!-- ===== SYSTEM NOTIFICATION ===== -->
+    <div id="system-notification"></div>
+    
+    <!-- ===== MAIN GAME AREA ===== -->
+    <div id="game-area">
+        <h1>🏝️ Mind Field</h1>
+        <p class="subtitle">What's firing at you today?</p>
+        
+        <div class="main-container">
+            <div>
+                <div id="canvas-container">
+                    <canvas id="battlefield" width="600" height="400"></canvas>
+                    <div class="quadrant-labels">
+                        <span class="quadrant-label ql-tl">Good Memories<br>⏮️ ✅</span>
+                        <span class="quadrant-label ql-tr">Good Ideas<br>✅ ⏭️</span>
+                        <span class="quadrant-label ql-bl">Bad Memories<br>⏮️ ❌</span>
+                        <span class="quadrant-label ql-br">Bad Ideas/Fears<br>❌ ⏭️</span>
+                    </div>
+                    
+                    <!-- Balance Display -->
+                    <div id="balance-display">
+                        <span class="balance-good">Good <span id="good-percent">50</span>%</span>
+                        <div class="balance-bar">
+                            <div class="balance-bar-good" id="balance-bar-good" style="width: 50%"></div>
+                            <div class="balance-bar-bad" id="balance-bar-bad" style="width: 50%"></div>
+                        </div>
+                        <span class="balance-bad"><span id="bad-percent">50</span>% Bad</span>
+                    </div>
+                    
+                    <!-- Mech Indicator -->
+                    <div id="mech-indicator">
+                        <span>🧘 -40% battlefield intensity</span>
+                        <span id="mech-timer"></span>
+                    </div>
+                    
+                    <!-- v0.7 Breathing Prompt Overlay -->
+                    <div id="breath-prompt">
+                        <div id="breath-text">Breathe in...</div>
+                        <div id="breath-cycle">Cycle 1 of 6</div>
+                    </div>
+                    
+                    <!-- v0.7 Meditation Complete Message -->
+                    <div id="meditation-complete">
+                        <div class="peace-message">✨ Peace achieved ✨</div>
+                        <div class="peace-sub">You can return to this anytime.</div>
+                    </div>
+                </div>
+                
+                <div id="legend">
+                    <div class="legend-item">
+                        <div class="legend-dot good"></div>
+                        <span>Good Forces</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot bad"></div>
+                        <span>Bad Forces</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot present"></div>
+                        <span>NOW (You)</span>
+                    </div>
+                    <div class="legend-item" id="mech-legend" style="display: none;">
+                        <div class="legend-dot mech"></div>
+                        <span>Meditated Mech</span>
+                    </div>
+                </div>
+                
+                <div id="score-display">
+                    <span id="score-text" class="winning neutral">Preparing battlefield...</span>
+                </div>
+            </div>
+            
+            <div id="input-panel">
+                <h2>🎯 Add to Battlefield</h2>
+                
+                <div class="input-group">
+                    <label>What's firing at you?</label>
+                    <input type="text" id="thought-input" placeholder="Enter a thought, memory, or worry...">
+                </div>
+                
+                <div class="input-group">
+                    <label>Type</label>
+                    <div class="radio-group" id="type-group">
+                        <label class="radio-option selected" data-value="past">
+                            <input type="radio" name="type" value="past" checked>
+                            ⏮️ Past Memory
+                        </label>
+                        <label class="radio-option" data-value="future">
+                            <input type="radio" name="type" value="future">
+                            ⏭️ Future Idea
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label>Valence</label>
+                    <div class="radio-group" id="valence-group">
+                        <label class="radio-option selected good" data-value="good">
+                            <input type="radio" name="valence" value="good" checked>
+                            ✅ Good
+                        </label>
+                        <label class="radio-option" data-value="bad">
+                            <input type="radio" name="valence" value="bad">
+                            ❌ Bad
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label>Weight</label>
+                    <div class="weight-slider-container">
+                        <div class="weight-labels">
+                            <span>Light</span>
+                            <span>Medium</span>
+                            <span>Heavy</span>
+                        </div>
+                        <input type="range" id="weight-slider" min="1" max="3" value="2" step="1">
+                        <div class="weight-value" id="weight-display">Medium</div>
+                    </div>
+                </div>
+                
+                <button id="add-thought-btn">Add to Battlefield</button>
+                
+                <div class="intensity-section">
+                    <h3>⚡ Firing Intensity</h3>
+                    <input type="range" id="intensity-slider" min="0.1" max="3" value="1" step="0.1">
+                    <div class="intensity-value" id="intensity-display">1.0x</div>
+                    <div class="intensity-status" id="intensity-status">All units active</div>
+                </div>
+                
+                <div class="controls-section">
+                    <button class="btn-ceasefire" id="ceasefire-btn">🕊️ Ceasefire</button>
+                    <button class="btn-clear" id="clear-btn">🗑️ Clear All</button>
+                </div>
+                
+                <div id="thoughts-list">
+                    <div class="empty-state">
+                        <div class="icon">💭</div>
+                        <div>Your thoughts will appear here.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== DIAGNOSTIC QUESTIONS =====
+        const DIAGNOSTIC_QUESTIONS = [
+            {
+                text: "I had a good memory surface recently",
+                domain: "past",
+                trueResult: { quadrant: "goodMemory", valence: "good", weight: 2 },
+                falseResult: { quadrant: "badMemory", valence: "bad", weight: 2 }
+            },
+            {
+                text: "Something from my past still bothers me",
+                domain: "past",
+                trueResult: { quadrant: "badMemory", valence: "bad", weight: 3 },
+                falseResult: { quadrant: "goodMemory", valence: "good", weight: 1 }
+            },
+            {
+                text: "I'm looking forward to something",
+                domain: "future",
+                trueResult: { quadrant: "goodIdea", valence: "good", weight: 2 },
+                falseResult: { quadrant: "badIdea", valence: "bad", weight: 2 }
+            },
+            {
+                text: "I'm worried about the future",
+                domain: "future",
+                trueResult: { quadrant: "badIdea", valence: "bad", weight: 3 },
+                falseResult: { quadrant: "goodIdea", valence: "good", weight: 1 }
+            },
+            {
+                text: "People have been kind to me lately",
+                domain: "past",
+                trueResult: { quadrant: "goodMemory", valence: "good", weight: 1 },
+                falseResult: { quadrant: "badMemory", valence: "bad", weight: 1 }
+            },
+            {
+                text: "I believe tomorrow will be better",
+                domain: "future",
+                trueResult: { quadrant: "goodIdea", valence: "good", weight: 2 },
+                falseResult: { quadrant: "badIdea", valence: "bad", weight: 2 }
+            },
+            {
+                text: "I did something I'm proud of recently",
+                domain: "past",
+                trueResult: { quadrant: "goodMemory", valence: "good", weight: 2 },
+                falseResult: { quadrant: "badMemory", valence: "bad", weight: 1 }
+            },
+            {
+                text: "I'm in control of my life right now",
+                domain: "future",
+                trueResult: { quadrant: "goodIdea", valence: "good", weight: 3 },
+                falseResult: { quadrant: "badIdea", valence: "bad", weight: 3 }
+            }
+        ];
+        
+        // ===== v0.6 COUNTER-THOUGHT BANKS =====
+        const COUNTER_THOUGHTS = {
+            goodToBad: {
+                past: [
+                    "Remember when you failed",
+                    "That embarrassing moment",
+                    "You've messed up before",
+                    "People have let you down",
+                    "It didn't work last time",
+                    "Remember that rejection",
+                    "You weren't good enough then",
+                    "That mistake still stings"
+                ],
+                future: [
+                    "But what if you're not?",
+                    "It won't last",
+                    "You'll probably fail",
+                    "What if things go wrong?",
+                    "Doubt settles in",
+                    "Tomorrow might be worse",
+                    "Nothing ever changes",
+                    "You might mess it up",
+                    "What if they find out?",
+                    "It's too good to be true"
+                ]
+            },
+            badToGood: {
+                past: [
+                    "But you've survived before",
+                    "Remember your strength",
+                    "Someone believed in you",
+                    "You did succeed once",
+                    "People have been kind",
+                    "You've overcome worse",
+                    "That time you surprised yourself",
+                    "Remember who helped you"
+                ],
+                future: [
+                    "Maybe it'll work",
+                    "Hope remains",
+                    "Tomorrow's different",
+                    "You can try again",
+                    "Things could improve",
+                    "There's still a chance",
+                    "You've learned from this",
+                    "Something good awaits",
+                    "It's not over yet",
+                    "You might surprise yourself"
+                ]
+            }
+        };
+        
+        const SYSTEM_MESSAGES = {
+            goodToBad: [
+                "Doubt creeps in...",
+                "Your mind responds...",
+                "But wait...",
+                "A shadow appears...",
+                "The balance shifts..."
+            ],
+            badToGood: [
+                "Hope persists...",
+                "Resilience emerges...",
+                "But still...",
+                "A light appears...",
+                "Something stirs..."
+            ]
+        };
+        
+        // ===== ROGUE UNIT THOUGHT BUBBLES =====
+        const ROGUE_BUBBLES = ["💭", "can't stop...", "oops", "...", "🤔", "still here"];
+        
+        // ===== ONBOARDING STATE =====
+        let currentQuestion = 0;
+        let diagnosticAnswers = [];
+        let phase = 'welcome';
+        
+        // ===== GAME STATE =====
+        let ceasefireMode = false;
+        let ceasefireTransition = 0;
+        let animationFrame;
+        let lastTime = 0;
+        let firingIntensity = 1.0;
+        let thoughts = [];
+        let globalFrameCount = 0;
+        
+        // ===== v0.6 AUTO-BALANCE STATE =====
+        let autoBalanceEnabled = true;
+        let lastAutoSpawnTime = 0;
+        let autoSpawnCount = 0;
+        let autoSpawnWindowStart = 0;
+        const AUTO_SPAWN_RATE_LIMIT = 3;
+        const AUTO_SPAWN_WINDOW_MS = 10000;
+        const BALANCE_THRESHOLD = 0.85;
+        let lastUserAddedWeight = 2;
+        let pendingAutoSpawn = null;
+        
+        // ===== v0.6 HIT TRACKING FOR COLOR BLENDING =====
+        let hitHistory = [];
+        const HIT_HISTORY_MAX = 50;
+        const HIT_HISTORY_AGE_MS = 3000;
+        let currentOrbColor = { r: 155, g: 89, b: 182 };
+        let targetOrbColor = { r: 155, g: 89, b: 182 };
+        
+        // ===== v0.7 BOX BREATHING MEDITATION STATE =====
+        const MEDITATION_CONFIG = {
+            phaseDuration: 4000, // 4 seconds per phase
+            totalCycles: 6,     // 6 complete cycles
+            phases: ['inhale', 'holdFull', 'exhale', 'holdEmpty'],
+            
+            // Orb sizes
+            baseRadius: 30,
+            inhaleRadius: 45,
+            exhaleRadius: 20,
+            holdPulseFullAmplitude: 2,
+            holdPulseEmptyAmplitude: 1,
+            holdPulseFrequency: 0.5, // Hz
+            
+            // Golden color for peace
+            goldenColor: { r: 245, g: 215, b: 110 }, // #F5D76E
+            
+            // Battlefield calming thresholds (by cycle)
+            fireRateMultiplier: [0.7, 0.5, 0.3, 0.15, 0.05, 0], // per cycle (0-5)
+            projectileSpeedMultiplier: [0.8, 0.7, 0.5, 0.4, 0.3, 0.2],
+            retreatStartCycle: 4, // Start retreat at cycle 5 (index 4)
+        };
+        
+        let meditationState = {
+            active: false,
+            startTime: 0,
+            currentCycle: 0,
+            currentPhase: 0, // 0=inhale, 1=holdFull, 2=exhale, 3=holdEmpty
+            phaseStartTime: 0,
+            phaseProgress: 0, // 0-1 within current phase
+            totalProgress: 0, // 0-1 over entire meditation
+            completed: false,
+            
+            // Animated values
+            orbRadius: 30,
+            orbTargetRadius: 30,
+            orbGlow: 0.5,
+            orbTargetGlow: 0.5,
+            calmingProgress: 0, // 0-1, how calm the battlefield is
+            
+            // Color transition to gold
+            colorTransitionProgress: 0,
+            
+            // v0.7.1: Rogue units for meditation
+            rogueUnits: [],
+        };
+        
+        // ===== v0.7.1 POST-MEDITATION RAMP-UP STATE =====
+        let postMeditationRampUp = {
+            active: false,
+            startTime: 0,
+            duration: 7000, // 7 seconds (middle of 5-10)
+            progress: 0, // 0-1
+            fireRateMultiplier: 0.1, // starts at 10%
+        };
+        
+        // ===== v0.7.1 MEDITATED MECH STATE =====
+        const MECH_CONFIG = {
+            duration: 180000, // 3 minutes in ms
+            fireRateReduction: 0.4, // 40% reduction
+            fireRateMultiplier: 1.67, // multiply delays by this (1 / 0.6)
+            size: 18, // 1.5x artillery (12)
+            flickerStartTime: 30000, // last 30 seconds
+            fadeOutDuration: 5000, // 5 seconds to return fire rates to normal
+        };
+        
+        let meditatedMech = {
+            active: false,
+            spawnTime: 0,
+            remaining: 0, // ms remaining
+            x: 0,
+            y: 0,
+            size: MECH_CONFIG.size,
+            opacity: 1,
+            glowPhase: 0,
+            isFlickering: false,
+            isFadingOut: false,
+            fadeOutStart: 0,
+            fadeOutProgress: 0, // 0-1 for fire rate restoration
+            wasShownFirstMessage: false,
+        };
+        
+        // Breath prompt text variations
+        const BREATH_PROMPTS = {
+            inhale: [
+                "Breathe in...",
+                "Breathe in...",
+                "Breathe in...",
+                "Breathe in...",
+                "Finding peace...",
+                "Finding peace..."
+            ],
+            holdFull: [
+                "Hold...",
+                "Hold...",
+                "Hold...",
+                "Hold...",
+                "Hold...",
+                "Hold..."
+            ],
+            exhale: [
+                "Breathe out...",
+                "Breathe out...",
+                "Let go...",
+                "Let go...",
+                "Release...",
+                "Release..."
+            ],
+            holdEmpty: [
+                "Hold...",
+                "Hold...",
+                "Hold...",
+                "Hold...",
+                "Hold...",
+                "Hold..."
+            ]
+        };
+        
+        // ===== QUADRANT DEFINITIONS =====
+        const QUADRANTS = {
+            goodMemory: { name: "Good Memory", cx: 180, cy: 120, xRange: [80, 280], yRange: [50, 180] },
+            goodIdea: { name: "Good Idea", cx: 420, cy: 120, xRange: [320, 520], yRange: [50, 180] },
+            badMemory: { name: "Bad Memory", cx: 180, cy: 300, xRange: [80, 280], yRange: [220, 350] },
+            badIdea: { name: "Bad Idea", cx: 420, cy: 300, xRange: [320, 520], yRange: [220, 350] }
+        };
+        
+        // ===== PRESENT MOMENT STATE =====
+        const presentMoment = {
+            x: 300,
+            y: 200,
+            baseRadius: 25,
+            currentRadius: 25,
+            pulsePhase: 0,
+            goodEnergy: 0,
+            badEnergy: 0,
+            shakeX: 0,
+            shakeY: 0,
+            shakeIntensity: 0,
+            glowIntensity: 0,
+            hitFlash: 0,
+            lastHitSide: null,
+            calmness: 0
+        };
+        
+        // ===== UNIT & COMBAT SYSTEM =====
+        let units = [];
+        let projectiles = [];
+        let impacts = [];
+        let thoughtBubbles = [];
+        let floatingTexts = [];
+        let mechParticles = [];
+        
+        // ===== v5.2 CHAOS CALIBRATION =====
+        const CHAOS_THRESHOLDS = {
+            CALM: 20,
+            ACTIVE: 40,
+            STRESSED: 60,
+            INTENSE: 80,
+            OVERWHELMING: 100
+        };
+        
+        const CHAOS_GAIN = {
+            light: { base: 0.008, max: 0.015 },
+            medium: { base: 0.02, max: 0.035 },
+            heavy: { base: 0.04, max: 0.07 }
+        };
+        
+        const CHAOS_DECAY = {
+            energy: 0.0008,
+            shake: 0.004,
+            glow: 0.002
+        };
+        
+        function getChaosCap() {
+            if (firingIntensity <= 1.0) {
+                return 0.65;
+            } else if (firingIntensity <= 1.5) {
+                return 0.65 + (firingIntensity - 1.0) * 0.4;
+            } else {
+                return Math.min(1.0, 0.85 + (firingIntensity - 1.5) * 0.1);
+            }
+        }
+        
+        function getSideDominanceModifier() {
+            const goodUnits = units.filter(u => u.side === 'good' && u.firingEnabled).length;
+            const badUnits = units.filter(u => u.side === 'bad' && u.firingEnabled).length;
+            const total = goodUnits + badUnits;
+            
+            if (total === 0) return 1.0;
+            
+            const badRatio = badUnits / total;
+            
+            if (badRatio > 0.6) {
+                return 1.0 + (badRatio - 0.6) * 0.75;
+            } else if (badRatio < 0.4) {
+                return 1.0 - (0.4 - badRatio) * 0.5;
+            }
+            return 1.0;
+        }
+        
+        function getEffectiveChaosLevel() {
+            const rawChaos = (presentMoment.goodEnergy + presentMoment.badEnergy) / 2;
+            const modifier = getSideDominanceModifier();
+            return Math.min(100, rawChaos * 100 * modifier);
+        }
+        
+        function getChaosStatusText() {
+            const chaos = getEffectiveChaosLevel();
+            
+            if (chaos < CHAOS_THRESHOLDS.CALM) {
+                return { text: 'peaceful', style: 'calm' };
+            } else if (chaos < CHAOS_THRESHOLDS.ACTIVE) {
+                return { text: 'active', style: 'active' };
+            } else if (chaos < CHAOS_THRESHOLDS.STRESSED) {
+                return { text: 'under pressure', style: 'stressed' };
+            } else if (chaos < CHAOS_THRESHOLDS.INTENSE) {
+                return { text: 'intense', style: 'intense' };
+            } else {
+                return { text: 'OVERWHELMING', style: 'overwhelming' };
+            }
+        }
+        
+        const WEIGHT_CONFIGS = {
+            1: {
+                unitCounts: [1, 2],
+                unitTypes: ['infantry'],
+                fireDelayRange: [120, 250],
+                projectileSize: 2,
+                label: 'Light',
+                chaosGain: CHAOS_GAIN.light
+            },
+            2: {
+                unitCounts: [2, 3],
+                unitTypes: ['infantry', 'infantry', 'tank'],
+                fireDelayRange: [80, 180],
+                projectileSize: 3,
+                label: 'Medium',
+                chaosGain: CHAOS_GAIN.medium
+            },
+            3: {
+                unitCounts: [3, 4],
+                unitTypes: ['tank', 'tank', 'artillery'],
+                fireDelayRange: [50, 120],
+                projectileSize: 4,
+                label: 'Heavy',
+                chaosGain: CHAOS_GAIN.heavy
+            }
+        };
+        
+        const UNIT_TYPE_CONFIGS = {
+            infantry: { 
+                size: 5, 
+                speed: 0.3, 
+                shape: 'circle',
+                fireDelayModifier: 1.2
+            },
+            tank: { 
+                size: 10, 
+                speed: 0.15, 
+                shape: 'square',
+                fireDelayModifier: 1.0
+            },
+            artillery: { 
+                size: 12, 
+                speed: 0.1, 
+                shape: 'diamond',
+                fireDelayModifier: 0.8
+            }
+        };
+        
+        // ===== CANVAS SETUP =====
+        const canvas = document.getElementById('battlefield');
+        const ctx = canvas.getContext('2d');
+        
+        // ===== COLORS =====
+        const colors = {
+            good: '#4a9eff',
+            goodDark: '#2a5e9f',
+            goodLight: '#7ab8ff',
+            bad: '#ff4a6a',
+            badDark: '#9f2a3a',
+            badLight: '#ff7a8a',
+            neutral: '#555',
+            neutralDark: '#333',
+            water: '#1a1a2e',
+            present: '#9b59b6',
+            presentLight: '#c39bd3',
+            quadrantGood: 'rgba(74, 158, 255, 0.08)',
+            quadrantBad: 'rgba(255, 74, 106, 0.08)',
+            mechGold: '#F5D76E'
+        };
+        
+        const COLOR_GOOD = { r: 74, g: 158, b: 255 };
+        const COLOR_BAD = { r: 255, g: 74, b: 106 };
+        const COLOR_NEUTRAL = { r: 155, g: 89, b: 182 };
+        
+        // ===== ONBOARDING FUNCTIONS =====
+        function startDiagnostic() {
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('question-container').style.display = 'flex';
+            phase = 'questions';
+            showQuestion(0);
+        }
+        
+        function showQuestion(index) {
+            currentQuestion = index;
+            const question = DIAGNOSTIC_QUESTIONS[index];
+            
+            document.getElementById('question-num').textContent = index + 1;
+            document.getElementById('progress-fill').style.width = ((index + 1) / 8 * 100) + '%';
+            
+            const questionText = document.getElementById('question-text');
+            const answerButtons = document.getElementById('answer-buttons');
+            
+            questionText.classList.remove('visible');
+            answerButtons.classList.remove('visible');
+            
+            setTimeout(() => {
+                questionText.textContent = `"${question.text}"`;
+                questionText.classList.add('visible');
+                answerButtons.classList.add('visible');
+            }, 100);
+        }
+        
+        function answerQuestion(answer) {
+            const question = DIAGNOSTIC_QUESTIONS[currentQuestion];
+            const result = answer ? question.trueResult : question.falseResult;
+            
+            diagnosticAnswers.push({
+                question: question.text,
+                answer: answer,
+                ...result
+            });
+            
+            if (currentQuestion < DIAGNOSTIC_QUESTIONS.length - 1) {
+                showQuestion(currentQuestion + 1);
+            } else {
+                startBuildingPhase();
+            }
+        }
+        
+        function startBuildingPhase() {
+            document.getElementById('diagnostic-screen').style.display = 'none';
+            document.getElementById('building-screen').style.display = 'flex';
+            phase = 'building';
+            
+            document.getElementById('game-area').style.display = 'flex';
+            
+            lastTime = performance.now();
+            animationFrame = requestAnimationFrame(gameLoop);
+            
+            let spawnDelay = 500;
+            diagnosticAnswers.forEach((answer, index) => {
+                setTimeout(() => {
+                    const thought = {
+                        id: Date.now() + index,
+                        text: answer.question,
+                        type: answer.quadrant.includes('Memory') ? 'past' : 'future',
+                        valence: answer.valence,
+                        weight: answer.weight,
+                        isDiagnostic: true,
+                        isSystemSpawned: false
+                    };
+                    thoughts.push(thought);
+                    spawnUnitsForThought(thought);
+                }, spawnDelay * index);
+            });
+            
+            setTimeout(() => {
+                showBattlefieldPhase();
+            }, 2000 + spawnDelay * diagnosticAnswers.length);
+        }
+        
+        function showBattlefieldPhase() {
+            document.getElementById('building-screen').style.display = 'none';
+            document.getElementById('game-area').classList.add('visible');
+            phase = 'battlefield';
+            
+            updateDisplay();
+            updateThoughtsList();
+            updateBalanceDisplay();
+            
+            setTimeout(() => {
+                showTransitionMessage();
+            }, 5000);
+        }
+        
+        function showTransitionMessage() {
+            const msg = document.getElementById('transition-message');
+            msg.style.display = 'block';
+            setTimeout(() => msg.classList.add('visible'), 50);
+        }
+        
+        function dismissTransition() {
+            const msg = document.getElementById('transition-message');
+            msg.classList.remove('visible');
+            setTimeout(() => {
+                msg.style.display = 'none';
+                showFullInterface();
+            }, 500);
+        }
+        
+        function showFullInterface() {
+            document.getElementById('input-panel').classList.add('visible');
+            document.getElementById('balance-display').classList.add('visible');
+            phase = 'full';
+            document.getElementById('thought-input').focus();
+        }
+        
+        // ===== v0.6 AUTO-BALANCE SYSTEM =====
+        function getCurrentForceRatio() {
+            const goodUnits = units.filter(u => u.side === 'good').length;
+            const badUnits = units.filter(u => u.side === 'bad').length;
+            const total = goodUnits + badUnits;
+            
+            if (total === 0) return { good: 0.5, bad: 0.5, total: 0 };
+            
+            return {
+                good: goodUnits / total,
+                bad: badUnits / total,
+                goodCount: goodUnits,
+                badCount: badUnits,
+                total: total
+            };
+        }
+        
+        function checkAutoBalance() {
+            if (phase !== 'full' || !autoBalanceEnabled || ceasefireMode || meditationState.active) return;
+            
+            const now = Date.now();
+            if (now - autoSpawnWindowStart > AUTO_SPAWN_WINDOW_MS) {
+                autoSpawnWindowStart = now;
+                autoSpawnCount = 0;
+            }
+            
+            if (autoSpawnCount >= AUTO_SPAWN_RATE_LIMIT) return;
+            if (pendingAutoSpawn) return;
+            
+            const ratio = getCurrentForceRatio();
+            if (ratio.total < 2) return;
+            
+            let triggerSide = null;
+            let counterSide = null;
+            
+            if (ratio.good > BALANCE_THRESHOLD) {
+                triggerSide = 'good';
+                counterSide = 'bad';
+            } else if (ratio.bad > BALANCE_THRESHOLD) {
+                triggerSide = 'bad';
+                counterSide = 'good';
+            }
+            
+            if (triggerSide) {
+                scheduleAutoSpawn(triggerSide, counterSide);
+            }
+        }
+        
+        function scheduleAutoSpawn(triggerSide, counterSide) {
+            const delay = 2000 + Math.random() * 1000;
+            
+            pendingAutoSpawn = setTimeout(() => {
+                executeAutoSpawn(triggerSide, counterSide);
+                pendingAutoSpawn = null;
+            }, delay);
+        }
+        
+        function executeAutoSpawn(triggerSide, counterSide) {
+            const now = Date.now();
+            
+            if (now - autoSpawnWindowStart > AUTO_SPAWN_WINDOW_MS) {
+                autoSpawnWindowStart = now;
+                autoSpawnCount = 0;
+            }
+            if (autoSpawnCount >= AUTO_SPAWN_RATE_LIMIT) return;
+            
+            const ratio = getCurrentForceRatio();
+            const checkRatio = triggerSide === 'good' ? ratio.good : ratio.bad;
+            if (checkRatio <= BALANCE_THRESHOLD) return;
+            
+            const bank = triggerSide === 'good' ? COUNTER_THOUGHTS.goodToBad : COUNTER_THOUGHTS.badToGood;
+            const messages = triggerSide === 'good' ? SYSTEM_MESSAGES.goodToBad : SYSTEM_MESSAGES.badToGood;
+            
+            const message = messages[Math.floor(Math.random() * messages.length)];
+            showSystemNotification(message, counterSide);
+            
+            let numCounters, counterWeight;
+            
+            if (triggerSide === 'good') {
+                numCounters = 1 + Math.floor(Math.random() * 3);
+                counterWeight = lastUserAddedWeight;
+            } else {
+                numCounters = 1 + Math.floor(Math.random() * 2);
+                counterWeight = Math.max(1, lastUserAddedWeight - 1);
+            }
+            
+            for (let i = 0; i < numCounters; i++) {
+                const domain = Math.random() < 0.5 ? 'past' : 'future';
+                const thoughtBank = bank[domain];
+                const text = thoughtBank[Math.floor(Math.random() * thoughtBank.length)];
+                
+                const thought = {
+                    id: Date.now() + i,
+                    text: text,
+                    type: domain,
+                    valence: counterSide,
+                    weight: counterWeight,
+                    isDiagnostic: false,
+                    isSystemSpawned: true
+                };
+                
+                thoughts.push(thought);
+                spawnUnitsForThought(thought, true);
+            }
+            
+            autoSpawnCount++;
+            lastAutoSpawnTime = now;
+            
+            updateThoughtsList();
+            updateDisplay();
+            updateBalanceDisplay();
+        }
+        
+        function showSystemNotification(message, side) {
+            const notif = document.getElementById('system-notification');
+            notif.textContent = message;
+            notif.className = '';
+            
+            if (side === 'good') {
+                notif.classList.add('good-counter');
+            } else if (side === 'bad') {
+                notif.classList.add('bad-counter');
+            } else if (side === 'mech') {
+                notif.classList.add('mech-notification');
+            } else if (side === 'battle') {
+                notif.classList.add('battle-resuming');
+            }
+            
+            notif.classList.add('visible');
+            
+            setTimeout(() => {
+                notif.classList.remove('visible');
+            }, 3500);
+        }
+        
+        // ===== v0.6 HIT TRACKING & COLOR BLENDING =====
+        function recordHit(side, weight) {
+            const now = Date.now();
+            
+            hitHistory.push({
+                type: side,
+                weight: weight,
+                timestamp: now
+            });
+            
+            hitHistory = hitHistory.filter(h => now - h.timestamp < HIT_HISTORY_AGE_MS);
+            
+            if (hitHistory.length > HIT_HISTORY_MAX) {
+                hitHistory = hitHistory.slice(-HIT_HISTORY_MAX);
+            }
+            
+            updateTargetOrbColor();
+        }
+        
+        function updateTargetOrbColor() {
+            // During meditation, target golden color progressively
+            if (meditationState.active) {
+                const goldProgress = meditationState.colorTransitionProgress;
+                const baseColor = hitHistory.length > 0 ? calculateHitBasedColor() : COLOR_NEUTRAL;
+                
+                targetOrbColor = {
+                    r: Math.round(baseColor.r + (MEDITATION_CONFIG.goldenColor.r - baseColor.r) * goldProgress),
+                    g: Math.round(baseColor.g + (MEDITATION_CONFIG.goldenColor.g - baseColor.g) * goldProgress),
+                    b: Math.round(baseColor.b + (MEDITATION_CONFIG.goldenColor.b - baseColor.b) * goldProgress)
+                };
+                return;
+            }
+            
+            if (hitHistory.length === 0) {
+                targetOrbColor = { ...COLOR_NEUTRAL };
+                return;
+            }
+            
+            targetOrbColor = calculateHitBasedColor();
+        }
+        
+        function calculateHitBasedColor() {
+            const now = Date.now();
+            const recentHits = hitHistory.filter(h => now - h.timestamp < HIT_HISTORY_AGE_MS);
+            
+            if (recentHits.length === 0) {
+                return { ...COLOR_NEUTRAL };
+            }
+            
+            let goodWeight = 0;
+            let badWeight = 0;
+            
+            recentHits.forEach(hit => {
+                const age = now - hit.timestamp;
+                const recencyWeight = 1 - (age / HIT_HISTORY_AGE_MS);
+                const hitWeight = hit.weight * recencyWeight;
+                
+                if (hit.type === 'good') {
+                    goodWeight += hitWeight;
+                } else {
+                    badWeight += hitWeight;
+                }
+            });
+            
+            const totalWeight = goodWeight + badWeight;
+            if (totalWeight === 0) {
+                return { ...COLOR_NEUTRAL };
+            }
+            
+            const badRatio = badWeight / totalWeight;
+            
+            return {
+                r: Math.round(COLOR_GOOD.r + (COLOR_BAD.r - COLOR_GOOD.r) * badRatio),
+                g: Math.round(COLOR_GOOD.g + (COLOR_BAD.g - COLOR_GOOD.g) * badRatio),
+                b: Math.round(COLOR_GOOD.b + (COLOR_BAD.b - COLOR_GOOD.b) * badRatio)
+            };
+        }
+        
+        function updateCurrentOrbColor(deltaTime) {
+            const lerpSpeed = 0.004 * deltaTime;
+            
+            currentOrbColor.r += (targetOrbColor.r - currentOrbColor.r) * lerpSpeed;
+            currentOrbColor.g += (targetOrbColor.g - currentOrbColor.g) * lerpSpeed;
+            currentOrbColor.b += (targetOrbColor.b - currentOrbColor.b) * lerpSpeed;
+        }
+        
+        function getOrbColorString(alpha = 1) {
+            const r = Math.round(currentOrbColor.r);
+            const g = Math.round(currentOrbColor.g);
+            const b = Math.round(currentOrbColor.b);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+        
+        function getOrbColorLight() {
+            return {
+                r: Math.min(255, currentOrbColor.r + 50),
+                g: Math.min(255, currentOrbColor.g + 50),
+                b: Math.min(255, currentOrbColor.b + 50)
+            };
+        }
+        
+        // ===== v0.7 BOX BREATHING MEDITATION =====
+        function startMeditation() {
+            // v0.7.1: Mark 1-2 random units as rogue at meditation START
+            const activeUnits = units.filter(u => u.opacity > 0.3);
+            const rogueUnits = [];
+            if (activeUnits.length > 0) {
+                const numRogues = Math.min(1 + Math.floor(Math.random() * 2), activeUnits.length); // 1-2 rogues
+                const shuffled = [...activeUnits].sort(() => Math.random() - 0.5);
+                for (let i = 0; i < numRogues; i++) {
+                    shuffled[i].isRogue = true;
+                    rogueUnits.push(shuffled[i]);
+                }
+            }
+            
+            meditationState = {
+                active: true,
+                startTime: Date.now(),
+                currentCycle: 0,
+                currentPhase: 0,
+                phaseStartTime: Date.now(),
+                phaseProgress: 0,
+                totalProgress: 0,
+                completed: false,
+                orbRadius: presentMoment.currentRadius,
+                orbTargetRadius: MEDITATION_CONFIG.inhaleRadius,
+                orbGlow: 0.5,
+                orbTargetGlow: 1.0,
+                calmingProgress: 0,
+                colorTransitionProgress: 0,
+                rogueUnits: rogueUnits,
+            };
+            
+            ceasefireMode = true;
+            
+            // Update button
+            const btn = document.getElementById('ceasefire-btn');
+            btn.textContent = '⏹️ End Meditation';
+            btn.classList.add('meditation-active');
+            btn.classList.remove('active');
+            
+            // Show breath prompt
+            updateBreathPrompt();
+            document.getElementById('breath-prompt').classList.add('visible');
+            document.getElementById('meditation-complete').classList.remove('visible');
+            
+            // Clear pending auto-spawn
+            if (pendingAutoSpawn) {
+                clearTimeout(pendingAutoSpawn);
+                pendingAutoSpawn = null;
+            }
+            
+            // Reset post-meditation ramp up
+            postMeditationRampUp.active = false;
+            
+            updateDisplay();
+        }
+        
+        function updateMeditation(deltaTime) {
+            if (!meditationState.active || meditationState.completed) return;
+            
+            const now = Date.now();
+            const config = MEDITATION_CONFIG;
+            
+            // Calculate phase progress
+            const phaseElapsed = now - meditationState.phaseStartTime;
+            meditationState.phaseProgress = Math.min(1, phaseElapsed / config.phaseDuration);
+            
+            // Calculate total progress
+            const cycleProgress = (meditationState.currentPhase + meditationState.phaseProgress) / 4;
+            meditationState.totalProgress = (meditationState.currentCycle + cycleProgress) / config.totalCycles;
+            
+            // Update color transition (gradual to gold over meditation)
+            meditationState.colorTransitionProgress = easeInOutCubic(meditationState.totalProgress);
+            updateTargetOrbColor();
+            
+            // Update calming progress (controls battlefield)
+            meditationState.calmingProgress = easeInOutCubic(meditationState.totalProgress);
+            
+            // Update orb size based on phase
+            const phase = config.phases[meditationState.currentPhase];
+            
+            if (phase === 'inhale') {
+                // Expand from exhale size to full size
+                const t = easeInOutSine(meditationState.phaseProgress);
+                meditationState.orbTargetRadius = config.exhaleRadius + (config.inhaleRadius - config.exhaleRadius) * t;
+                meditationState.orbTargetGlow = 0.5 + 0.5 * t;
+            } else if (phase === 'holdFull') {
+                // Gentle pulse at full size
+                const pulseT = Math.sin(now * 0.001 * Math.PI * 2 * config.holdPulseFrequency);
+                meditationState.orbTargetRadius = config.inhaleRadius + pulseT * config.holdPulseFullAmplitude;
+                meditationState.orbTargetGlow = 1.0;
+            } else if (phase === 'exhale') {
+                // Contract from full to small
+                const t = easeInOutSine(meditationState.phaseProgress);
+                meditationState.orbTargetRadius = config.inhaleRadius - (config.inhaleRadius - config.exhaleRadius) * t;
+                meditationState.orbTargetGlow = 1.0 - 0.4 * t;
+            } else if (phase === 'holdEmpty') {
+                // Gentle pulse at small size
+                const pulseT = Math.sin(now * 0.001 * Math.PI * 2 * config.holdPulseFrequency);
+                meditationState.orbTargetRadius = config.exhaleRadius + pulseT * config.holdPulseEmptyAmplitude;
+                meditationState.orbTargetGlow = 0.6;
+            }
+            
+            // Smooth interpolation of actual values
+            const lerpFactor = 0.1;
+            meditationState.orbRadius += (meditationState.orbTargetRadius - meditationState.orbRadius) * lerpFactor;
+            meditationState.orbGlow += (meditationState.orbTargetGlow - meditationState.orbGlow) * lerpFactor;
+            
+            // Check for phase transition
+            if (meditationState.phaseProgress >= 1) {
+                advanceMeditationPhase();
+            }
+            
+            // Apply calming effects to battlefield
+            applyMeditationCalming();
+            
+            // v0.7.1: Handle rogue unit firing (only in cycles 0-4, NOT cycle 5 which is final peace)
+            if (meditationState.currentCycle < 5) {
+                meditationState.rogueUnits.forEach(unit => {
+                    // 2% chance per frame to fire/show bubble
+                    if (Math.random() < 0.02 && unit.opacity > 0.3) {
+                        // Don't actually fire, just show thought bubble
+                        const bubbleText = ROGUE_BUBBLES[Math.floor(Math.random() * ROGUE_BUBBLES.length)];
+                        thoughtBubbles.push({
+                            x: unit.x,
+                            y: unit.y - 15,
+                            text: bubbleText,
+                            startTime: Date.now(),
+                            duration: 1500
+                        });
+                        
+                        // Occasionally actually fire (very rare)
+                        if (Math.random() < 0.1) {
+                            fireProjectile(unit);
+                        }
+                    }
+                });
+            }
+        }
+        
+        function advanceMeditationPhase() {
+            meditationState.currentPhase++;
+            meditationState.phaseStartTime = Date.now();
+            meditationState.phaseProgress = 0;
+            
+            // Cycle complete? (all 4 phases done)
+            if (meditationState.currentPhase >= 4) {
+                meditationState.currentPhase = 0;
+                meditationState.currentCycle++;
+                
+                // Meditation complete?
+                if (meditationState.currentCycle >= MEDITATION_CONFIG.totalCycles) {
+                    completeMeditation();
+                    return;
+                }
+            }
+            
+            updateBreathPrompt();
+        }
+        
+        function updateBreathPrompt() {
+            const phase = MEDITATION_CONFIG.phases[meditationState.currentPhase];
+            const cycle = meditationState.currentCycle;
+            
+            const prompts = BREATH_PROMPTS[phase];
+            const promptText = prompts[Math.min(cycle, prompts.length - 1)];
+            
+            document.getElementById('breath-text').textContent = promptText;
+            // v0.7.1: Display shows current cycle (1-indexed) - only updates at START of new cycle
+            document.getElementById('breath-cycle').textContent = `Cycle ${cycle + 1} of ${MEDITATION_CONFIG.totalCycles}`;
+        }
+        
+        function applyMeditationCalming() {
+            const calm = meditationState.calmingProgress;
+            const cycle = meditationState.currentCycle;
+            const config = MEDITATION_CONFIG;
+            
+            // Reduce chaos effects
+            presentMoment.shakeIntensity *= (1 - calm * 0.05);
+            presentMoment.goodEnergy *= (1 - calm * 0.02);
+            presentMoment.badEnergy *= (1 - calm * 0.02);
+            
+            // Get fire rate for current cycle
+            const fireRateMult = config.fireRateMultiplier[Math.min(cycle, config.fireRateMultiplier.length - 1)];
+            
+            // Apply to units
+            units.forEach(unit => {
+                // Rogue units stay enabled but controlled separately
+                if (unit.isRogue) {
+                    unit.firingEnabled = false; // Will fire via rogue logic
+                    return;
+                }
+                
+                // Disable firing based on cycle
+                if (fireRateMult === 0) {
+                    unit.firingEnabled = false;
+                } else {
+                    // Probabilistic firing based on rate
+                    unit.firingEnabled = Math.random() < fireRateMult;
+                }
+                
+                // Slow down movement
+                unit.speed *= (1 - calm * 0.01);
+                
+                // Start retreat in later cycles
+                if (cycle >= config.retreatStartCycle) {
+                    const retreatX = unit.x < 300 ? -100 : 700;
+                    const dx = retreatX - unit.x;
+                    unit.x += dx * 0.003;
+                    unit.opacity = Math.max(0.1, unit.opacity - 0.002);
+                }
+            });
+            
+            // Slow and fade projectiles based on cycle
+            const speedMult = config.projectileSpeedMultiplier[Math.min(cycle, config.projectileSpeedMultiplier.length - 1)];
+            projectiles.forEach(proj => {
+                proj.duration = proj.duration / speedMult; // Effectively slows them
+            });
+        }
+        
+        function completeMeditation() {
+            meditationState.completed = true;
+            meditationState.active = false;
+            
+            // Keep ceasefire mode briefly
+            ceasefireMode = true;
+            
+            // Hide breath prompt, show completion message
+            document.getElementById('breath-prompt').classList.remove('visible');
+            
+            setTimeout(() => {
+                document.getElementById('meditation-complete').classList.add('visible');
+            }, 500);
+            
+            // Update button
+            const btn = document.getElementById('ceasefire-btn');
+            btn.textContent = '🕊️ Ceasefire';
+            btn.classList.remove('meditation-active');
+            btn.classList.add('active');
+            
+            // Set final peaceful state
+            presentMoment.calmness = 1;
+            presentMoment.goodEnergy = 0;
+            presentMoment.badEnergy = 0;
+            presentMoment.shakeIntensity = 0;
+            
+            // Clear rogue status
+            units.forEach(u => u.isRogue = false);
+            meditationState.rogueUnits = [];
+            
+            // v0.7.1: Spawn or reset Meditated Mech
+            spawnOrResetMeditatedMech();
+            
+            updateDisplay();
+        }
+        
+        // ===== v0.7.1 MEDITATED MECH =====
+        function spawnOrResetMeditatedMech() {
+            const wasActive = meditatedMech.active;
+            
+            // Spawn in Good Memories quadrant (top-left)
+            const q = QUADRANTS.goodMemory;
+            
+            meditatedMech = {
+                active: true,
+                spawnTime: Date.now(),
+                remaining: MECH_CONFIG.duration,
+                x: q.cx,
+                y: q.cy,
+                size: MECH_CONFIG.size,
+                opacity: 1,
+                glowPhase: 0,
+                isFlickering: false,
+                isFadingOut: false,
+                fadeOutStart: 0,
+                fadeOutProgress: 0,
+                wasShownFirstMessage: wasActive, // Don't show first message if renewing
+            };
+            
+            // Show appropriate notification
+            if (wasActive) {
+                showSystemNotification("Meditation renewed ✨", 'mech');
+            } else {
+                showSystemNotification("Your meditation created lasting peace. The Meditated Mech will calm your battlefield.", 'mech');
+            }
+            
+            // Show legend and indicator
+            document.getElementById('mech-legend').style.display = 'flex';
+            document.getElementById('mech-indicator').classList.add('visible');
+            
+            updateMechUI();
+            updateThoughtsList();
+        }
+        
+        function updateMeditatedMech(deltaTime) {
+            if (!meditatedMech.active) return;
+            
+            const now = Date.now();
+            meditatedMech.remaining = Math.max(0, MECH_CONFIG.duration - (now - meditatedMech.spawnTime));
+            
+            // Check for fade out phase (expired)
+            if (meditatedMech.remaining <= 0 && !meditatedMech.isFadingOut) {
+                startMechFadeOut();
+                return;
+            }
+            
+            // Flickering in last 30 seconds
+            meditatedMech.isFlickering = meditatedMech.remaining > 0 && meditatedMech.remaining < MECH_CONFIG.flickerStartTime;
+            
+            // Breathing glow animation
+            meditatedMech.glowPhase += deltaTime * 0.002;
+            
+            // Shrink over lifetime (1.0 to 0.6 size multiplier)
+            const lifeProgress = 1 - (meditatedMech.remaining / MECH_CONFIG.duration);
+            const sizeMultiplier = 1 - (lifeProgress * 0.4); // Goes from 1.0 to 0.6
+            meditatedMech.size = MECH_CONFIG.size * sizeMultiplier;
+            
+            // Fade opacity slightly over lifetime
+            meditatedMech.opacity = 0.6 + (1 - lifeProgress) * 0.4; // Goes from 1.0 to 0.6
+            
+            // Handle fade out phase
+            if (meditatedMech.isFadingOut) {
+                meditatedMech.fadeOutProgress = Math.min(1, (now - meditatedMech.fadeOutStart) / MECH_CONFIG.fadeOutDuration);
+                meditatedMech.opacity = 1 - meditatedMech.fadeOutProgress;
+                
+                if (meditatedMech.fadeOutProgress >= 1) {
+                    expireMeditatedMech();
+                }
+            }
+            
+            updateMechUI();
+        }
+        
+        function startMechFadeOut() {
+            meditatedMech.isFadingOut = true;
+            meditatedMech.fadeOutStart = Date.now();
+            meditatedMech.fadeOutProgress = 0;
+            
+            // Create particle effect
+            createMechExplosion();
+            
+            showSystemNotification("Meditation effect faded", 'mech');
+        }
+        
+        function expireMeditatedMech() {
+            meditatedMech.active = false;
+            
+            // Hide UI elements
+            document.getElementById('mech-legend').style.display = 'none';
+            document.getElementById('mech-indicator').classList.remove('visible');
+            
+            updateThoughtsList();
+        }
+        
+        function createMechExplosion() {
+            // Golden particles
+            for (let i = 0; i < 20; i++) {
+                const angle = (Math.PI * 2 / 20) * i + Math.random() * 0.3;
+                const speed = 1 + Math.random() * 2;
+                mechParticles.push({
+                    x: meditatedMech.x,
+                    y: meditatedMech.y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: 3 + Math.random() * 3,
+                    life: 1,
+                    decay: 0.02 + Math.random() * 0.01
+                });
+            }
+        }
+        
+        function updateMechUI() {
+            if (!meditatedMech.active) return;
+            
+            const remaining = meditatedMech.remaining;
+            const minutes = Math.floor(remaining / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+            const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            document.getElementById('mech-timer').textContent = `🧘 ${timeStr}`;
+        }
+        
+        function getMechFireRateMultiplier() {
+            if (!meditatedMech.active) return 1;
+            
+            // During fade out, gradually restore fire rates
+            if (meditatedMech.isFadingOut) {
+                const restoreProgress = meditatedMech.fadeOutProgress;
+                return MECH_CONFIG.fireRateMultiplier - (MECH_CONFIG.fireRateMultiplier - 1) * restoreProgress;
+            }
+            
+            return MECH_CONFIG.fireRateMultiplier;
+        }
+        
+        function drawMeditatedMech() {
+            if (!meditatedMech.active) return;
+            
+            ctx.save();
+            
+            // Flickering
+            let drawOpacity = meditatedMech.opacity;
+            if (meditatedMech.isFlickering) {
+                drawOpacity *= 0.5 + Math.sin(Date.now() * 0.02) * 0.5;
+            }
+            
+            ctx.globalAlpha = drawOpacity;
+            
+            const x = meditatedMech.x;
+            const y = meditatedMech.y;
+            const size = meditatedMech.size;
+            
+            // Pulsing glow aura (breathing animation)
+            const glowSize = size + 8 + Math.sin(meditatedMech.glowPhase) * 4;
+            const glowGradient = ctx.createRadialGradient(x, y, size * 0.5, x, y, glowSize);
+            glowGradient.addColorStop(0, 'rgba(245, 215, 110, 0.4)');
+            glowGradient.addColorStop(0.5, 'rgba(245, 215, 110, 0.2)');
+            glowGradient.addColorStop(1, 'rgba(245, 215, 110, 0)');
+            
+            ctx.beginPath();
+            ctx.arc(x, y, glowSize, 0, Math.PI * 2);
+            ctx.fillStyle = glowGradient;
+            ctx.fill();
+            
+            // Draw octagon shape
+            ctx.beginPath();
+            const numSides = 8;
+            for (let i = 0; i < numSides; i++) {
+                const angle = (Math.PI * 2 / numSides) * i - Math.PI / 8;
+                const px = x + Math.cos(angle) * size;
+                const py = y + Math.sin(angle) * size;
+                if (i === 0) {
+                    ctx.moveTo(px, py);
+                } else {
+                    ctx.lineTo(px, py);
+                }
+            }
+            ctx.closePath();
+            
+            // Golden fill
+            const gradient = ctx.createRadialGradient(x - size * 0.3, y - size * 0.3, 0, x, y, size);
+            gradient.addColorStop(0, '#FFF8DC'); // Light gold
+            gradient.addColorStop(0.5, '#F5D76E'); // Gold
+            gradient.addColorStop(1, '#D4A017'); // Dark gold
+            
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Draw 🧘 emoji in center
+            ctx.font = `${Math.floor(size * 0.9)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#000';
+            ctx.globalAlpha = drawOpacity * 0.9;
+            ctx.fillText('🧘', x, y);
+            
+            ctx.restore();
+        }
+        
+        function drawMechParticles() {
+            ctx.save();
+            
+            mechParticles.forEach(p => {
+                ctx.globalAlpha = p.life;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = colors.mechGold;
+                ctx.fill();
+            });
+            
+            ctx.restore();
+        }
+        
+        function updateMechParticles(deltaTime) {
+            mechParticles.forEach(p => {
+                p.x += p.vx * deltaTime * 0.05;
+                p.y += p.vy * deltaTime * 0.05;
+                p.life -= p.decay;
+            });
+            
+            mechParticles = mechParticles.filter(p => p.life > 0);
+        }
+        
+        // ===== v0.7.1 POST-MEDITATION RAMP-UP =====
+        function startPostMeditationRampUp() {
+            postMeditationRampUp = {
+                active: true,
+                startTime: Date.now(),
+                duration: 5000 + Math.random() * 5000, // 5-10 seconds
+                progress: 0,
+                fireRateMultiplier: 0.1,
+            };
+            
+            showSystemNotification("Battle resuming...", 'battle');
+        }
+        
+        function updatePostMeditationRampUp(deltaTime) {
+            if (!postMeditationRampUp.active) return;
+            
+            const now = Date.now();
+            const elapsed = now - postMeditationRampUp.startTime;
+            
+            // Ease-in progress (slow start, fast finish)
+            postMeditationRampUp.progress = Math.min(1, elapsed / postMeditationRampUp.duration);
+            const easedProgress = easeInQuad(postMeditationRampUp.progress);
+            
+            // Fire rate goes from 10% to 100%
+            postMeditationRampUp.fireRateMultiplier = 0.1 + easedProgress * 0.9;
+            
+            if (postMeditationRampUp.progress >= 1) {
+                postMeditationRampUp.active = false;
+            }
+        }
+        
+        function easeInQuad(t) {
+            return t * t;
+        }
+        
+        function getPostMeditationFireRateMultiplier() {
+            if (!postMeditationRampUp.active) return 1;
+            return postMeditationRampUp.fireRateMultiplier;
+        }
+        
+        function endMeditationEarly() {
+            meditationState.active = false;
+            meditationState.completed = false;
+            ceasefireMode = false;
+            
+            // Clear rogue status
+            units.forEach(u => u.isRogue = false);
+            meditationState.rogueUnits = [];
+            
+            // Hide prompts
+            document.getElementById('breath-prompt').classList.remove('visible');
+            document.getElementById('meditation-complete').classList.remove('visible');
+            
+            // Reset button
+            const btn = document.getElementById('ceasefire-btn');
+            btn.textContent = '🕊️ Ceasefire';
+            btn.classList.remove('meditation-active');
+            btn.classList.remove('active');
+            
+            // Respawn units
+            units = [];
+            thoughts.forEach(thought => {
+                spawnUnitsForThought(thought, thought.isSystemSpawned);
+            });
+            
+            presentMoment.calmness = 0;
+            
+            // Reset orb color transition
+            meditationState.colorTransitionProgress = 0;
+            updateTargetOrbColor();
+            
+            updateDisplay();
+            updateBalanceDisplay();
+        }
+        
+        // Easing functions
+        function easeInOutSine(t) {
+            return -(Math.cos(Math.PI * t) - 1) / 2;
+        }
+        
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+        
+        // ===== UNIT MANAGEMENT =====
+        function getQuadrantKey(type, valence) {
+            if (type === 'past') {
+                return valence === 'good' ? 'goodMemory' : 'badMemory';
+            } else {
+                return valence === 'good' ? 'goodIdea' : 'badIdea';
+            }
+        }
+        
+        function getRandomFireDelay(weight, unitType) {
+            const config = WEIGHT_CONFIGS[weight];
+            const typeConfig = UNIT_TYPE_CONFIGS[unitType];
+            const [minDelay, maxDelay] = config.fireDelayRange;
+            
+            const adjustedMin = Math.floor(minDelay * typeConfig.fireDelayModifier);
+            const adjustedMax = Math.floor(maxDelay * typeConfig.fireDelayModifier);
+            
+            return adjustedMin + Math.floor(Math.random() * (adjustedMax - adjustedMin));
+        }
+        
+        function createUnit(side, quadrant, weight, thoughtId, isSystemSpawned = false) {
+            const q = QUADRANTS[quadrant];
+            const config = WEIGHT_CONFIGS[weight];
+            const types = config.unitTypes;
+            const type = types[Math.floor(Math.random() * types.length)];
+            const unitConfig = UNIT_TYPE_CONFIGS[type];
+            
+            let x, y;
+            if (isSystemSpawned) {
+                const isLeft = quadrant === 'goodMemory' || quadrant === 'badMemory';
+                x = isLeft ? -20 : canvas.width + 20;
+                y = q.yRange[0] + Math.random() * (q.yRange[1] - q.yRange[0]);
+            } else {
+                x = q.xRange[0] + Math.random() * (q.xRange[1] - q.xRange[0]);
+                y = q.yRange[0] + Math.random() * (q.yRange[1] - q.yRange[0]);
+            }
+            
+            const homeX = q.xRange[0] + Math.random() * (q.xRange[1] - q.xRange[0]);
+            const homeY = q.yRange[0] + Math.random() * (q.yRange[1] - q.yRange[0]);
+            
+            const initialDelay = getRandomFireDelay(weight, type);
+            const randomOffset = Math.floor(Math.random() * initialDelay);
+            
+            return {
+                x: x,
+                y: y,
+                homeX: homeX,
+                homeY: homeY,
+                quadrant: quadrant,
+                side: side,
+                type: type,
+                size: unitConfig.size,
+                speed: unitConfig.speed,
+                shape: unitConfig.shape,
+                weight: weight,
+                nextFireFrame: globalFrameCount + randomOffset,
+                projectileSize: config.projectileSize,
+                opacity: 0,
+                isRogue: false,
+                wobble: Math.random() * Math.PI * 2,
+                thoughtId: thoughtId,
+                firingEnabled: true,
+                isSystemSpawned: isSystemSpawned
+            };
+        }
+        
+        function spawnUnitsForThought(thought, isSystemSpawned = false) {
+            const config = WEIGHT_CONFIGS[thought.weight];
+            const counts = config.unitCounts;
+            const numUnits = counts[0] + Math.floor(Math.random() * (counts[1] - counts[0] + 1));
+            const quadrant = thought.isDiagnostic 
+                ? (thought.type === 'past' 
+                    ? (thought.valence === 'good' ? 'goodMemory' : 'badMemory')
+                    : (thought.valence === 'good' ? 'goodIdea' : 'badIdea'))
+                : getQuadrantKey(thought.type, thought.valence);
+            const side = thought.valence;
+            
+            for (let i = 0; i < numUnits; i++) {
+                const unit = createUnit(side, quadrant, thought.weight, thought.id, isSystemSpawned);
+                units.push(unit);
+                
+                if (isSystemSpawned && i === 0) {
+                    floatingTexts.push({
+                        x: QUADRANTS[quadrant].cx,
+                        y: QUADRANTS[quadrant].cy - 30,
+                        text: thought.text,
+                        startTime: Date.now(),
+                        duration: 2500,
+                        side: side
+                    });
+                }
+            }
+            
+            applyIntensityToUnits();
+            
+            if (!isSystemSpawned && !thought.isDiagnostic) {
+                lastUserAddedWeight = thought.weight;
+                setTimeout(() => checkAutoBalance(), 500);
+            }
+        }
+        
+        function applyIntensityToUnits() {
+            if (units.length === 0) return;
+            
+            const intensity = firingIntensity;
+            
+            if (intensity >= 1.0) {
+                units.forEach(u => u.firingEnabled = true);
+            } else {
+                const enabledRatio = intensity;
+                
+                units.forEach(unit => {
+                    unit.firingEnabled = Math.random() < enabledRatio;
+                });
+                
+                const goodUnits = units.filter(u => u.side === 'good');
+                const badUnits = units.filter(u => u.side === 'bad');
+                
+                if (goodUnits.length > 0 && !goodUnits.some(u => u.firingEnabled)) {
+                    goodUnits[Math.floor(Math.random() * goodUnits.length)].firingEnabled = true;
+                }
+                if (badUnits.length > 0 && !badUnits.some(u => u.firingEnabled)) {
+                    badUnits[Math.floor(Math.random() * badUnits.length)].firingEnabled = true;
+                }
+            }
+            
+            updateIntensityStatus();
+        }
+        
+        function updateIntensityStatus() {
+            const statusEl = document.getElementById('intensity-status');
+            const enabledCount = units.filter(u => u.firingEnabled).length;
+            const totalCount = units.length;
+            
+            if (totalCount === 0) {
+                statusEl.textContent = 'No units on field';
+            } else if (firingIntensity >= 1.0) {
+                if (firingIntensity > 1.0) {
+                    statusEl.textContent = `All ${totalCount} units active • ${firingIntensity.toFixed(1)}x fire rate`;
+                } else {
+                    statusEl.textContent = `All ${totalCount} units active`;
+                }
+            } else {
+                const percent = Math.round((enabledCount / totalCount) * 100);
+                statusEl.textContent = `${enabledCount}/${totalCount} units firing (${percent}%)`;
+            }
+            
+            // Add mech effect indicator
+            if (meditatedMech.active && !meditatedMech.isFadingOut) {
+                statusEl.textContent += ' • 🧘 -40%';
+            }
+        }
+        
+        function fireProjectile(unit) {
+            const targetX = presentMoment.x + (Math.random() - 0.5) * 20;
+            const targetY = presentMoment.y + (Math.random() - 0.5) * 20;
+            
+            const dx = targetX - unit.x;
+            const dy = targetY - unit.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const baseDuration = dist * 3 + 500;
+            
+            const speedMultiplier = firingIntensity > 1.0 ? firingIntensity : 1.0;
+            const duration = baseDuration / speedMultiplier;
+            
+            projectiles.push({
+                startX: unit.x,
+                startY: unit.y,
+                targetX: targetX,
+                targetY: targetY,
+                x: unit.x,
+                y: unit.y,
+                side: unit.side,
+                size: unit.projectileSize,
+                weight: unit.weight,
+                startTime: Date.now(),
+                duration: duration,
+                arcHeight: dist * 0.15
+            });
+        }
+        
+        function createImpact(x, y, side, size, weight) {
+            impacts.push({
+                x: x,
+                y: y,
+                side: side,
+                size: size || 3,
+                startTime: Date.now(),
+                duration: 400
+            });
+            
+            presentMoment.hitFlash = 1;
+            presentMoment.lastHitSide = side;
+            
+            recordHit(side, weight || 2);
+            
+            // Skip chaos gain during meditation
+            if (meditationState.active) return;
+            
+            const chaosConfig = WEIGHT_CONFIGS[weight || 2].chaosGain;
+            const chaosGain = chaosConfig.base + Math.random() * (chaosConfig.max - chaosConfig.base);
+            
+            const cap = getChaosCap();
+            
+            if (side === 'good') {
+                presentMoment.goodEnergy = Math.min(cap, presentMoment.goodEnergy + chaosGain);
+                presentMoment.glowIntensity = Math.min(cap, presentMoment.glowIntensity + chaosGain * 0.8);
+            } else {
+                presentMoment.badEnergy = Math.min(cap, presentMoment.badEnergy + chaosGain);
+                presentMoment.shakeIntensity = Math.min(cap, presentMoment.shakeIntensity + chaosGain * 1.2);
+            }
+        }
+        
+        function createThoughtBubble(x, y) {
+            const bubbles = ["💭", "...", "🤔", "😅", "!!", "whoops", "can't stop..."];
+            thoughtBubbles.push({
+                x: x,
+                y: y - 20,
+                text: bubbles[Math.floor(Math.random() * bubbles.length)],
+                startTime: Date.now(),
+                duration: 1500
+            });
+        }
+        
+        // ===== v0.6 BALANCE DISPLAY =====
+        function updateBalanceDisplay() {
+            const ratio = getCurrentForceRatio();
+            
+            if (ratio.total === 0) {
+                document.getElementById('good-percent').textContent = '50';
+                document.getElementById('bad-percent').textContent = '50';
+                document.getElementById('balance-bar-good').style.width = '50%';
+                document.getElementById('balance-bar-bad').style.width = '50%';
+                return;
+            }
+            
+            const goodPercent = Math.round(ratio.good * 100);
+            const badPercent = Math.round(ratio.bad * 100);
+            
+            document.getElementById('good-percent').textContent = goodPercent;
+            document.getElementById('bad-percent').textContent = badPercent;
+            document.getElementById('balance-bar-good').style.width = goodPercent + '%';
+            document.getElementById('balance-bar-bad').style.width = badPercent + '%';
+        }
+        
+        // ===== DRAWING =====
+        function drawIsland() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = colors.water;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.beginPath();
+            ctx.moveTo(100, 200);
+            ctx.bezierCurveTo(80, 100, 200, 30, 300, 50);
+            ctx.bezierCurveTo(400, 30, 520, 100, 500, 200);
+            ctx.bezierCurveTo(550, 300, 450, 400, 300, 380);
+            ctx.bezierCurveTo(150, 400, 50, 300, 100, 200);
+            ctx.closePath();
+            ctx.fillStyle = '#2a2a3e';
+            ctx.fill();
+            
+            // Apply desaturation during meditation
+            const desatAmount = meditationState.active ? meditationState.calmingProgress * 0.5 : 0;
+            
+            drawQuadrant('goodMemory', colors.quadrantGood, desatAmount);
+            drawQuadrant('goodIdea', colors.quadrantGood, desatAmount);
+            drawQuadrant('badMemory', colors.quadrantBad, desatAmount);
+            drawQuadrant('badIdea', colors.quadrantBad, desatAmount);
+            
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            
+            ctx.beginPath();
+            ctx.moveTo(100, 200);
+            ctx.lineTo(500, 200);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(300, 60);
+            ctx.lineTo(300, 370);
+            ctx.stroke();
+            
+            ctx.setLineDash([]);
+            
+            ctx.beginPath();
+            ctx.moveTo(100, 200);
+            ctx.bezierCurveTo(80, 100, 200, 30, 300, 50);
+            ctx.bezierCurveTo(400, 30, 520, 100, 500, 200);
+            ctx.bezierCurveTo(550, 300, 450, 400, 300, 380);
+            ctx.bezierCurveTo(150, 400, 50, 300, 100, 200);
+            ctx.closePath();
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        function drawQuadrant(key, color, desatAmount = 0) {
+            const q = QUADRANTS[key];
+            
+            // Desaturate toward gray during meditation
+            let finalColor = color;
+            if (desatAmount > 0) {
+                // Parse the rgba
+                const match = color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+                if (match) {
+                    const r = parseInt(match[1]);
+                    const g = parseInt(match[2]);
+                    const b = parseInt(match[3]);
+                    const a = parseFloat(match[4]);
+                    
+                    // Blend toward neutral gray
+                    const gray = 100;
+                    const newR = Math.round(r + (gray - r) * desatAmount);
+                    const newG = Math.round(g + (gray - g) * desatAmount);
+                    const newB = Math.round(b + (gray - b) * desatAmount);
+                    const newA = a * (1 - desatAmount * 0.3);
+                    
+                    finalColor = `rgba(${newR}, ${newG}, ${newB}, ${newA})`;
+                }
+            }
+            
+            ctx.fillStyle = finalColor;
+            
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(100, 200);
+            ctx.bezierCurveTo(80, 100, 200, 30, 300, 50);
+            ctx.bezierCurveTo(400, 30, 520, 100, 500, 200);
+            ctx.bezierCurveTo(550, 300, 450, 400, 300, 380);
+            ctx.bezierCurveTo(150, 400, 50, 300, 100, 200);
+            ctx.closePath();
+            ctx.clip();
+            
+            ctx.fillRect(q.xRange[0], q.yRange[0], q.xRange[1] - q.xRange[0], q.yRange[1] - q.yRange[0]);
+            ctx.restore();
+        }
+        
+        function drawPresentMoment() {
+            const pm = presentMoment;
+            
+            // During meditation, use meditation-controlled values
+            let radius, glowAmount, shakeAmount;
+            
+            if (meditationState.active || meditationState.completed) {
+                radius = meditationState.orbRadius;
+                glowAmount = meditationState.orbGlow;
+                shakeAmount = Math.max(0, pm.shakeIntensity * (1 - meditationState.calmingProgress));
+            } else {
+                const effectiveChaos = getEffectiveChaosLevel() / 100;
+                shakeAmount = Math.min(pm.shakeIntensity, effectiveChaos) * 6;
+                
+                const pulseSpeed = 0.03 + effectiveChaos * 0.04;
+                pm.pulsePhase += pulseSpeed * (firingIntensity > 1 ? firingIntensity : 1);
+                const pulse = Math.sin(pm.pulsePhase) * (0.05 + effectiveChaos * 0.08) + 1;
+                radius = pm.currentRadius * pulse;
+                glowAmount = 0.4 + pm.glowIntensity * 0.6;
+            }
+            
+            if (shakeAmount > 0.1) {
+                pm.shakeX = (Math.random() - 0.5) * shakeAmount;
+                pm.shakeY = (Math.random() - 0.5) * shakeAmount;
+            } else {
+                pm.shakeX = 0;
+                pm.shakeY = 0;
+            }
+            
+            const x = pm.x + pm.shakeX;
+            const y = pm.y + pm.shakeY;
+            
+            ctx.save();
+            
+            // Glow layers
+            const baseGlowRadius = radius + 15;
+            const maxGlowRadius = radius + 15 + glowAmount * 35;
+            
+            for (let i = 3; i > 0; i--) {
+                const layerRadius = radius + (maxGlowRadius - radius) * (i / 3);
+                const alpha = 0.08 * (1 - i / 4) * glowAmount;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, layerRadius, 0, Math.PI * 2);
+                ctx.fillStyle = getOrbColorString(alpha);
+                ctx.fill();
+            }
+            
+            // Hit flash
+            if (pm.hitFlash > 0 && !meditationState.active) {
+                ctx.beginPath();
+                ctx.arc(x, y, radius + 10 * pm.hitFlash, 0, Math.PI * 2);
+                ctx.fillStyle = getOrbColorString(pm.hitFlash * 0.4);
+                ctx.fill();
+            }
+            
+            // Main orb gradient
+            const gradient = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, 0, x, y, radius);
+            
+            if (meditationState.active || meditationState.completed) {
+                // Golden meditation gradient
+                const lightColor = getOrbColorLight();
+                const lightColorStr = `rgb(${lightColor.r}, ${lightColor.g}, ${lightColor.b})`;
+                const mainColorStr = getOrbColorString(1);
+                
+                gradient.addColorStop(0, '#ffffff');
+                gradient.addColorStop(0.4, lightColorStr);
+                gradient.addColorStop(1, mainColorStr);
+            } else if (ceasefireMode && pm.calmness > 0.3) {
+                const calmT = pm.calmness;
+                gradient.addColorStop(0, `rgba(255, 255, 255, ${0.9 + calmT * 0.1})`);
+                gradient.addColorStop(0.5, lerpColor('#ffffff', '#f4d03f', calmT));
+                gradient.addColorStop(1, lerpColor('#9b59b6', '#d4a017', calmT));
+            } else {
+                const lightColor = getOrbColorLight();
+                const lightColorStr = `rgb(${lightColor.r}, ${lightColor.g}, ${lightColor.b})`;
+                const mainColorStr = getOrbColorString(1);
+                
+                gradient.addColorStop(0, '#ffffff');
+                gradient.addColorStop(0.5, lightColorStr);
+                gradient.addColorStop(1, mainColorStr);
+            }
+            
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // Inner highlight
+            ctx.beginPath();
+            ctx.arc(x - radius * 0.25, y - radius * 0.25, radius * 0.3, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.fill();
+            
+            // Outer ring
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = (meditationState.active || meditationState.completed || ceasefireMode) 
+                ? 'rgba(255, 255, 255, 0.8)' 
+                : 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Label
+            ctx.font = 'bold 12px sans-serif';
+            ctx.textAlign = 'center';
+            
+            if (meditationState.active || meditationState.completed) {
+                ctx.fillStyle = 'rgba(245, 215, 110, 0.9)';
+                ctx.fillText('✨ NOW ✨', x, y + radius + 20);
+            } else if (ceasefireMode) {
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.9)';
+                ctx.fillText('✨ NOW ✨', x, y + radius + 20);
+            } else {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.fillText('NOW', x, y + radius + 20);
+                
+                // Chaos indicator
+                const effectiveChaos = getEffectiveChaosLevel() / 100;
+                if (effectiveChaos > 0.15) {
+                    ctx.font = '10px sans-serif';
+                    const status = getChaosStatusText();
+                    
+                    if (status.style === 'calm') {
+                        ctx.fillStyle = 'rgba(100, 255, 100, 0.6)';
+                    } else if (status.style === 'active') {
+                        ctx.fillStyle = 'rgba(200, 200, 200, 0.6)';
+                    } else if (status.style === 'stressed') {
+                        ctx.fillStyle = 'rgba(255, 200, 100, 0.7)';
+                    } else if (status.style === 'intense') {
+                        ctx.fillStyle = 'rgba(255, 150, 100, 0.8)';
+                    } else {
+                        ctx.fillStyle = 'rgba(255, 100, 100, 0.9)';
+                    }
+                    
+                    ctx.fillText(status.text, x, y + radius + 35);
+                }
+            }
+            
+            ctx.restore();
+        }
+        
+        function drawUnits() {
+            units.forEach(unit => {
+                if (unit.opacity <= 0) return;
+                
+                ctx.save();
+                
+                let finalOpacity = unit.opacity;
+                if (!unit.firingEnabled && firingIntensity < 1.0 && !meditationState.active) {
+                    finalOpacity *= 0.35;
+                }
+                if (unit.isSystemSpawned) {
+                    finalOpacity *= 0.85;
+                }
+                // Fade during meditation
+                if (meditationState.active) {
+                    finalOpacity *= (1 - meditationState.calmingProgress * 0.3);
+                }
+                ctx.globalAlpha = finalOpacity;
+                
+                const baseColor = unit.side === 'good' ? colors.good : colors.bad;
+                const darkColor = unit.side === 'good' ? colors.goodDark : colors.badDark;
+                
+                // Desaturate during meditation
+                let drawColor = baseColor;
+                let drawDarkColor = darkColor;
+                
+                if (meditationState.active && meditationState.calmingProgress > 0.3) {
+                    const desat = meditationState.calmingProgress * 0.5;
+                    drawColor = desaturateColor(baseColor, desat);
+                    drawDarkColor = desaturateColor(darkColor, desat);
+                } else if (!unit.firingEnabled && firingIntensity < 1.0) {
+                    drawColor = '#666';
+                    drawDarkColor = '#444';
+                }
+                
+                ctx.translate(unit.x, unit.y);
+                
+                if (!ceasefireMode && !meditationState.active && unit.opacity > 0.5 && unit.firingEnabled) {
+                    const wobbleSpeed = firingIntensity > 1.0 ? firingIntensity : 1.0;
+                    const wobbleAmount = Math.sin(Date.now() * 0.003 * wobbleSpeed + unit.wobble) * 1;
+                    ctx.translate(wobbleAmount, 0);
+                }
+                
+                const angle = Math.atan2(presentMoment.y - unit.y, presentMoment.x - unit.x);
+                ctx.rotate(angle);
+                
+                if (unit.shape === 'circle') {
+                    ctx.rotate(-angle);
+                    ctx.beginPath();
+                    ctx.arc(0, 0, unit.size, 0, Math.PI * 2);
+                    ctx.fillStyle = drawColor;
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    
+                    if (unit.isSystemSpawned && unit.opacity > 0.5) {
+                        ctx.beginPath();
+                        ctx.arc(0, 0, unit.size + 3, 0, Math.PI * 2);
+                        ctx.strokeStyle = 'rgba(155, 89, 182, 0.4)';
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([2, 2]);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    }
+                } else if (unit.shape === 'square') {
+                    ctx.fillStyle = drawDarkColor;
+                    ctx.fillRect(-unit.size, -unit.size * 0.7, unit.size * 2, unit.size * 1.4);
+                    ctx.fillStyle = drawColor;
+                    ctx.fillRect(-unit.size * 0.6, -unit.size * 0.5, unit.size * 1.2, unit.size);
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(unit.size * 0.3, -2, unit.size * 0.8, 4);
+                } else if (unit.shape === 'diamond') {
+                    ctx.rotate(-angle);
+                    ctx.beginPath();
+                    ctx.moveTo(0, -unit.size);
+                    ctx.lineTo(unit.size, 0);
+                    ctx.lineTo(0, unit.size);
+                    ctx.lineTo(-unit.size, 0);
+                    ctx.closePath();
+                    ctx.fillStyle = drawColor;
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(0, 0, unit.size * 0.4, 0, Math.PI * 2);
+                    ctx.fillStyle = drawDarkColor;
+                    ctx.fill();
+                }
+                
+                if (!unit.firingEnabled && firingIntensity < 1.0 && unit.opacity > 0.5 && !meditationState.active) {
+                    ctx.rotate(unit.shape === 'circle' || unit.shape === 'diamond' ? 0 : -angle);
+                    ctx.font = '8px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                    ctx.fillText('zzz', 0, -unit.size - 5);
+                }
+                
+                ctx.restore();
+            });
+        }
+        
+        function desaturateColor(hexColor, amount) {
+            const rgb = hexToRgb(hexColor);
+            const gray = (rgb.r + rgb.g + rgb.b) / 3;
+            const r = Math.round(rgb.r + (gray - rgb.r) * amount);
+            const g = Math.round(rgb.g + (gray - rgb.g) * amount);
+            const b = Math.round(rgb.b + (gray - rgb.b) * amount);
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+        
+        function drawProjectiles() {
+            const now = Date.now();
+            
+            projectiles.forEach(proj => {
+                const elapsed = now - proj.startTime;
+                const t = Math.min(elapsed / proj.duration, 1);
+                
+                const x = proj.startX + (proj.targetX - proj.startX) * t;
+                const arcY = proj.arcHeight * Math.sin(t * Math.PI);
+                const y = proj.startY + (proj.targetY - proj.startY) * t - arcY;
+                
+                proj.x = x;
+                proj.y = y;
+                
+                const color = proj.side === 'good' ? colors.goodLight : colors.badLight;
+                
+                ctx.save();
+                
+                // Fade projectiles during later meditation cycles
+                let alpha = 1;
+                if (meditationState.active) {
+                    const cycle = meditationState.currentCycle;
+                    if (cycle >= 3) {
+                        alpha = Math.max(0.2, 1 - (cycle - 2) * 0.25);
+                    }
+                }
+                ctx.globalAlpha = alpha;
+                
+                ctx.beginPath();
+                const prevT = Math.max(0, t - 0.1);
+                const trailX = proj.startX + (proj.targetX - proj.startX) * prevT;
+                const trailArcY = proj.arcHeight * Math.sin(prevT * Math.PI);
+                const trailY = proj.startY + (proj.targetY - proj.startY) * prevT - trailArcY;
+                
+                const gradient = ctx.createLinearGradient(trailX, trailY, x, y);
+                gradient.addColorStop(0, 'transparent');
+                gradient.addColorStop(1, color);
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = proj.size * 0.7;
+                ctx.moveTo(trailX, trailY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.arc(x, y, proj.size, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.arc(x, y, proj.size * 2, 0, Math.PI * 2);
+                ctx.fillStyle = color.replace('ff', '44');
+                ctx.fill();
+                
+                ctx.restore();
+            });
+        }
+        
+        function drawImpacts() {
+            const now = Date.now();
+            
+            impacts.forEach(impact => {
+                const elapsed = now - impact.startTime;
+                const t = elapsed / impact.duration;
+                
+                if (t >= 1) return;
+                
+                const color = impact.side === 'good' ? colors.good : colors.bad;
+                const radius = 5 + t * 20 * (impact.size / 3);
+                const opacity = 1 - t;
+                
+                ctx.save();
+                ctx.globalAlpha = opacity * 0.5;
+                
+                // Reduce impact visibility during meditation
+                if (meditationState.active) {
+                    ctx.globalAlpha *= (1 - meditationState.calmingProgress * 0.5);
+                }
+                
+                ctx.beginPath();
+                ctx.arc(impact.x, impact.y, radius, 0, Math.PI * 2);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2 * (1 - t);
+                ctx.stroke();
+                
+                if (t < 0.3) {
+                    ctx.beginPath();
+                    ctx.arc(impact.x, impact.y, 6 * (1 - t * 3), 0, Math.PI * 2);
+                    ctx.fillStyle = '#fff';
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            });
+        }
+        
+        function drawThoughtBubbles() {
+            const now = Date.now();
+            
+            thoughtBubbles.forEach(bubble => {
+                const elapsed = now - bubble.startTime;
+                const t = elapsed / bubble.duration;
+                
+                if (t >= 1) return;
+                
+                const opacity = t < 0.2 ? t * 5 : (1 - (t - 0.2) / 0.8);
+                const y = bubble.y - t * 20;
+                
+                ctx.save();
+                ctx.globalAlpha = opacity;
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#fff';
+                ctx.fillText(bubble.text, bubble.x, y);
+                ctx.restore();
+            });
+        }
+        
+        function drawFloatingTexts() {
+            const now = Date.now();
+            
+            floatingTexts.forEach(ft => {
+                const elapsed = now - ft.startTime;
+                const t = elapsed / ft.duration;
+                
+                if (t >= 1) return;
+                
+                let opacity;
+                if (t < 0.15) {
+                    opacity = t / 0.15;
+                } else if (t > 0.7) {
+                    opacity = (1 - t) / 0.3;
+                } else {
+                    opacity = 1;
+                }
+                
+                const y = ft.y - t * 30;
+                
+                ctx.save();
+                ctx.globalAlpha = opacity * 0.9;
+                ctx.font = 'italic 11px sans-serif';
+                ctx.textAlign = 'center';
+                
+                const textWidth = ctx.measureText(ft.text).width;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.beginPath();
+                ctx.roundRect(ft.x - textWidth/2 - 8, y - 10, textWidth + 16, 18, 8);
+                ctx.fill();
+                
+                ctx.fillStyle = ft.side === 'good' ? colors.goodLight : colors.badLight;
+                ctx.fillText(ft.text, ft.x, y + 2);
+                
+                ctx.restore();
+            });
+        }
+        
+        // ===== ANIMATION LOOP =====
+        function update(timestamp) {
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+            globalFrameCount++;
+            
+            const now = Date.now();
+            
+            // v0.7: Update meditation state
+            updateMeditation(deltaTime);
+            
+            // v0.7.1: Update post-meditation ramp-up
+            updatePostMeditationRampUp(deltaTime);
+            
+            // v0.7.1: Update meditated mech
+            updateMeditatedMech(deltaTime);
+            updateMechParticles(deltaTime);
+            
+            updateCurrentOrbColor(deltaTime);
+            
+            if (globalFrameCount % 60 === 0) {
+                hitHistory = hitHistory.filter(h => now - h.timestamp < HIT_HISTORY_AGE_MS);
+                updateTargetOrbColor();
+            }
+            
+            // Update ceasefire transition (not used during meditation)
+            if (!meditationState.active) {
+                if (ceasefireMode && ceasefireTransition < 1) {
+                    ceasefireTransition = Math.min(1, ceasefireTransition + deltaTime * 0.002);
+                } else if (!ceasefireMode && ceasefireTransition > 0) {
+                    ceasefireTransition = Math.max(0, ceasefireTransition - deltaTime * 0.003);
+                }
+            }
+            
+            const pm = presentMoment;
+            
+            // Skip chaos decay during meditation (handled separately)
+            if (!meditationState.active) {
+                pm.goodEnergy = Math.max(0, pm.goodEnergy - deltaTime * CHAOS_DECAY.energy);
+                pm.badEnergy = Math.max(0, pm.badEnergy - deltaTime * CHAOS_DECAY.energy);
+                pm.shakeIntensity = Math.max(0, pm.shakeIntensity - deltaTime * CHAOS_DECAY.shake);
+                pm.glowIntensity = Math.max(0, pm.glowIntensity - deltaTime * CHAOS_DECAY.glow);
+            }
+            
+            pm.hitFlash = Math.max(0, pm.hitFlash - deltaTime * 0.006);
+            
+            if (ceasefireMode && !meditationState.active) {
+                pm.calmness = Math.min(1, pm.calmness + deltaTime * 0.0005);
+                pm.goodEnergy = Math.max(0, pm.goodEnergy - deltaTime * 0.0015);
+                pm.badEnergy = Math.max(0, pm.badEnergy - deltaTime * 0.0015);
+            } else if (!meditationState.active) {
+                pm.calmness = Math.max(0, pm.calmness - deltaTime * 0.002);
+            }
+            
+            if (!meditationState.active) {
+                const effectiveChaos = getEffectiveChaosLevel() / 100;
+                pm.currentRadius = pm.baseRadius + effectiveChaos * 8;
+            }
+            
+            // Update units
+            units.forEach(unit => {
+                if (meditationState.active) {
+                    // Meditation handles unit behavior
+                    unit.opacity = Math.min(1, unit.opacity + 0.002 * deltaTime);
+                } else if (ceasefireMode) {
+                    const retreatX = unit.x < 300 ? -100 : 700;
+                    const dx = retreatX - unit.x;
+                    unit.x += dx * 0.002 * deltaTime;
+                    
+                    unit.opacity = Math.max(0, unit.opacity - 0.001 * deltaTime);
+                    
+                    if (unit.isRogue && unit.opacity > 0.3 && Math.random() < 0.0001 * deltaTime) {
+                        fireProjectile(unit);
+                        createThoughtBubble(unit.x, unit.y);
+                    }
+                } else {
+                    unit.opacity = Math.min(1, unit.opacity + 0.005 * deltaTime);
+                    
+                    const dx = unit.homeX - unit.x;
+                    const dy = unit.homeY - unit.y;
+                    unit.x += dx * 0.01;
+                    unit.y += dy * 0.01;
+                    
+                    if (unit.firingEnabled && globalFrameCount >= unit.nextFireFrame) {
+                        fireProjectile(unit);
+                        
+                        let baseDelay = getRandomFireDelay(unit.weight, unit.type);
+                        
+                        // v0.7.1: Apply mech fire rate modifier
+                        const mechMultiplier = getMechFireRateMultiplier();
+                        baseDelay = Math.floor(baseDelay * mechMultiplier);
+                        
+                        // v0.7.1: Apply post-meditation ramp-up
+                        const rampUpMultiplier = getPostMeditationFireRateMultiplier();
+                        if (rampUpMultiplier < 1) {
+                            // Lower multiplier = less frequent firing = higher delay
+                            baseDelay = Math.floor(baseDelay / rampUpMultiplier);
+                        }
+                        
+                        if (firingIntensity > 1.0) {
+                            baseDelay = Math.floor(baseDelay / firingIntensity);
+                        }
+                        
+                        unit.nextFireFrame = globalFrameCount + baseDelay;
+                    }
+                }
+            });
+            
+            // Mark rogues during non-meditation ceasefire
+            if (ceasefireMode && !meditationState.active && units.filter(u => u.isRogue).length === 0) {
+                const activeUnits = units.filter(u => u.opacity > 0.5);
+                if (activeUnits.length > 0) {
+                    const numRogues = Math.min(2, activeUnits.length);
+                    for (let i = 0; i < numRogues; i++) {
+                        const rogue = activeUnits[Math.floor(Math.random() * activeUnits.length)];
+                        rogue.isRogue = true;
+                    }
+                }
+            }
+            
+            if (!ceasefireMode && !meditationState.active) {
+                units.forEach(u => u.isRogue = false);
+            }
+            
+            // Update projectiles
+            projectiles.forEach(proj => {
+                const elapsed = now - proj.startTime;
+                if (elapsed >= proj.duration) {
+                    createImpact(proj.targetX, proj.targetY, proj.side, proj.size, proj.weight);
+                }
+            });
+            
+            projectiles = projectiles.filter(proj => {
+                const elapsed = now - proj.startTime;
+                return elapsed < proj.duration;
+            });
+            
+            impacts = impacts.filter(impact => {
+                const elapsed = now - impact.startTime;
+                return elapsed < impact.duration;
+            });
+            
+            thoughtBubbles = thoughtBubbles.filter(bubble => {
+                const elapsed = now - bubble.startTime;
+                return elapsed < bubble.duration;
+            });
+            
+            floatingTexts = floatingTexts.filter(ft => {
+                const elapsed = now - ft.startTime;
+                return elapsed < ft.duration;
+            });
+            
+            units = units.filter(u => u.opacity > 0.01);
+            
+            if (globalFrameCount % 30 === 0) {
+                updateBalanceDisplay();
+            }
+        }
+        
+        function render() {
+            drawIsland();
+            drawMeditatedMech();
+            drawMechParticles();
+            drawPresentMoment();
+            drawUnits();
+            drawProjectiles();
+            drawImpacts();
+            drawThoughtBubbles();
+            drawFloatingTexts();
+        }
+        
+        function gameLoop(timestamp) {
+            update(timestamp);
+            render();
+            animationFrame = requestAnimationFrame(gameLoop);
+        }
+        
+        // ===== HELPERS =====
+        function lerpColor(color1, color2, t) {
+            const c1 = hexToRgb(color1);
+            const c2 = hexToRgb(color2);
+            const r = Math.round(c1.r + (c2.r - c1.r) * t);
+            const g = Math.round(c1.g + (c2.g - c1.g) * t);
+            const b = Math.round(c1.b + (c2.b - c1.b) * t);
+            return `rgb(${r},${g},${b})`;
+        }
+        
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 0, g: 0, b: 0 };
+        }
+        
+        function formatTime(ms) {
+            const minutes = Math.floor(ms / 60000);
+            const seconds = Math.floor((ms % 60000) / 1000);
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // ===== UI LOGIC =====
+        function updateDisplay() {
+            const goodUnits = units.filter(u => u.side === 'good').length;
+            const badUnits = units.filter(u => u.side === 'bad').length;
+            
+            const scoreText = document.getElementById('score-text');
+            
+            if (meditationState.active) {
+                const phase = MEDITATION_CONFIG.phases[meditationState.currentPhase];
+                const cycle = meditationState.currentCycle + 1;
+                scoreText.textContent = `🧘 Breathing... (Cycle ${cycle}/${MEDITATION_CONFIG.totalCycles})`;
+                scoreText.className = 'winning peaceful';
+            } else if (meditationState.completed) {
+                scoreText.textContent = '✨ Peace achieved';
+                scoreText.className = 'winning peaceful';
+            } else if (ceasefireMode) {
+                scoreText.textContent = '🕊️ Finding Peace';
+                scoreText.className = 'winning neutral';
+            } else if (postMeditationRampUp.active) {
+                const percent = Math.round(postMeditationRampUp.fireRateMultiplier * 100);
+                scoreText.textContent = `⚔️ Battle resuming... (${percent}%)`;
+                scoreText.className = 'winning neutral';
+            } else if (thoughts.length === 0) {
+                scoreText.textContent = 'Add thoughts to see your Mind Field';
+                scoreText.className = 'winning neutral';
+            } else if (goodUnits > badUnits) {
+                scoreText.textContent = `More positive fire (${goodUnits} vs ${badUnits} units)`;
+                scoreText.className = 'winning good';
+            } else if (badUnits > goodUnits) {
+                scoreText.textContent = `More negative fire (${badUnits} vs ${goodUnits} units)`;
+                scoreText.className = 'winning bad';
+            } else {
+                scoreText.textContent = `Equal crossfire (${goodUnits} each side)`;
+                scoreText.className = 'winning neutral';
+            }
+            
+            updateIntensityStatus();
+        }
+        
+        function updateThoughtsList() {
+            const list = document.getElementById('thoughts-list');
+            
+            let html = '';
+            
+            // Add mech item if active
+            if (meditatedMech.active) {
+                const timeStr = formatTime(meditatedMech.remaining);
+                html += `
+                    <div class="thought-item mech-item">
+                        <span class="thought-text">🧘 Meditated Mech</span>
+                        <span class="thought-meta mech-meta">${timeStr} remaining</span>
+                    </div>
+                `;
+            }
+            
+            if (thoughts.length === 0 && !meditatedMech.active) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">💭</div>
+                        <div>No thoughts yet. Add what's on your mind.</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            html += thoughts.map(t => {
+                const typeIcon = t.type === 'past' ? '⏮️' : '⏭️';
+                const weightLabel = WEIGHT_CONFIGS[t.weight].label;
+                let tag = '';
+                let extraClass = '';
+                
+                if (t.isDiagnostic) {
+                    tag = '<span class="diagnostic-tag">diagnostic</span>';
+                    extraClass = 'diagnostic';
+                } else if (t.isSystemSpawned) {
+                    tag = '<span class="system-tag">system</span>';
+                    extraClass = 'system-spawned';
+                }
+                
+                const truncatedText = t.text.length > 25 ? t.text.substring(0, 25) + '...' : t.text;
+                return `
+                    <div class="thought-item ${t.valence} ${extraClass}">
+                        <span class="thought-text">${truncatedText}${tag}</span>
+                        <span class="thought-meta">${typeIcon} ${weightLabel}</span>
+                    </div>
+                `;
+            }).join('');
+            
+            list.innerHTML = html;
+        }
+        
+        function addThought() {
+            const input = document.getElementById('thought-input');
+            const text = input.value.trim();
+            
+            if (!text) {
+                input.focus();
+                return;
+            }
+            
+            const type = document.querySelector('#type-group .radio-option.selected').dataset.value;
+            const valence = document.querySelector('#valence-group .radio-option.selected').dataset.value;
+            const weight = parseInt(document.getElementById('weight-slider').value);
+            
+            const thought = {
+                id: Date.now(),
+                text: text,
+                type: type,
+                valence: valence,
+                weight: weight,
+                isDiagnostic: false,
+                isSystemSpawned: false
+            };
+            
+            thoughts.push(thought);
+            spawnUnitsForThought(thought);
+            
+            input.value = '';
+            input.focus();
+            
+            updateThoughtsList();
+            updateDisplay();
+            updateBalanceDisplay();
+            
+            // v0.7.1: Adding thought interrupts meditation/ceasefire/ramp-up
+            if (meditationState.active) {
+                endMeditationEarly();
+            } else if (meditationState.completed || ceasefireMode) {
+                // Resume battle
+                meditationState.completed = false;
+                document.getElementById('meditation-complete').classList.remove('visible');
+                ceasefireMode = false;
+                
+                const btn = document.getElementById('ceasefire-btn');
+                btn.textContent = '🕊️ Ceasefire';
+                btn.classList.remove('active');
+                
+                presentMoment.calmness = 0;
+                meditationState.colorTransitionProgress = 0;
+                updateTargetOrbColor();
+            }
+            
+            // Interrupt post-meditation ramp-up (user takes control)
+            if (postMeditationRampUp.active) {
+                postMeditationRampUp.active = false;
+            }
+        }
+        
+        function toggleCeasefire() {
+            // If meditation is active, end it early
+            if (meditationState.active) {
+                endMeditationEarly();
+                return;
+            }
+            
+            // If meditation completed and in peaceful state, resume battle with ramp-up
+            if (meditationState.completed) {
+                meditationState.completed = false;
+                document.getElementById('meditation-complete').classList.remove('visible');
+                
+                ceasefireMode = false;
+                const btn = document.getElementById('ceasefire-btn');
+                btn.textContent = '🕊️ Ceasefire';
+                btn.classList.remove('active');
+                
+                // Respawn units
+                units = [];
+                thoughts.forEach(thought => {
+                    spawnUnitsForThought(thought, thought.isSystemSpawned);
+                });
+                
+                presentMoment.calmness = 0;
+                meditationState.colorTransitionProgress = 0;
+                updateTargetOrbColor();
+                
+                // v0.7.1: Start gradual ramp-up
+                startPostMeditationRampUp();
+                
+                updateDisplay();
+                updateBalanceDisplay();
+                return;
+            }
+            
+            // Start meditation!
+            if (!ceasefireMode) {
+                startMeditation();
+            } else {
+                // Already in ceasefire but not meditation - resume with ramp-up
+                ceasefireMode = false;
+                const btn = document.getElementById('ceasefire-btn');
+                btn.textContent = '🕊️ Ceasefire';
+                btn.classList.remove('active');
+                
+                units = [];
+                thoughts.forEach(thought => {
+                    spawnUnitsForThought(thought, thought.isSystemSpawned);
+                });
+                
+                presentMoment.calmness = 0;
+                
+                // v0.7.1: Start gradual ramp-up
+                startPostMeditationRampUp();
+                
+                updateDisplay();
+                updateBalanceDisplay();
+            }
+        }
+        
+        function clearAll() {
+            if (pendingAutoSpawn) {
+                clearTimeout(pendingAutoSpawn);
+                pendingAutoSpawn = null;
+            }
+            
+            // End meditation if active
+            if (meditationState.active || meditationState.completed) {
+                meditationState.active = false;
+                meditationState.completed = false;
+                document.getElementById('breath-prompt').classList.remove('visible');
+                document.getElementById('meditation-complete').classList.remove('visible');
+            }
+            
+            // Clear mech
+            meditatedMech.active = false;
+            document.getElementById('mech-legend').style.display = 'none';
+            document.getElementById('mech-indicator').classList.remove('visible');
+            
+            thoughts = [];
+            units = [];
+            projectiles = [];
+            impacts = [];
+            thoughtBubbles = [];
+            floatingTexts = [];
+            mechParticles = [];
+            hitHistory = [];
+            ceasefireMode = false;
+            ceasefireTransition = 0;
+            autoSpawnCount = 0;
+            postMeditationRampUp.active = false;
+            
+            currentOrbColor = { ...COLOR_NEUTRAL };
+            targetOrbColor = { ...COLOR_NEUTRAL };
+            
+            presentMoment.goodEnergy = 0;
+            presentMoment.badEnergy = 0;
+            presentMoment.shakeIntensity = 0;
+            presentMoment.glowIntensity = 0;
+            presentMoment.hitFlash = 0;
+            presentMoment.calmness = 0;
+            presentMoment.currentRadius = presentMoment.baseRadius;
+            
+            meditationState = {
+                active: false,
+                startTime: 0,
+                currentCycle: 0,
+                currentPhase: 0,
+                phaseStartTime: 0,
+                phaseProgress: 0,
+                totalProgress: 0,
+                completed: false,
+                orbRadius: 30,
+                orbTargetRadius: 30,
+                orbGlow: 0.5,
+                orbTargetGlow: 0.5,
+                calmingProgress: 0,
+                colorTransitionProgress: 0,
+                rogueUnits: [],
+            };
+            
+            const btn = document.getElementById('ceasefire-btn');
+            btn.textContent = '🕊️ Ceasefire';
+            btn.classList.remove('active', 'meditation-active');
+            
+            updateThoughtsList();
+            updateDisplay();
+            updateBalanceDisplay();
+        }
+        
+        // ===== EVENT LISTENERS =====
+        function setupEventListeners() {
+            document.getElementById('start-btn').addEventListener('click', startDiagnostic);
+            
+            document.getElementById('true-btn').addEventListener('click', () => answerQuestion(true));
+            document.getElementById('false-btn').addEventListener('click', () => answerQuestion(false));
+            
+            document.getElementById('dismiss-transition').addEventListener('click', dismissTransition);
+            
+            document.querySelectorAll('.radio-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const group = this.parentElement;
+                    group.querySelectorAll('.radio-option').forEach(opt => {
+                        opt.classList.remove('selected', 'good', 'bad');
+                    });
+                    this.classList.add('selected');
+                    
+                    if (group.id === 'valence-group') {
+                        this.classList.add(this.dataset.value);
+                    }
+                    
+                    this.querySelector('input').checked = true;
+                });
+            });
+            
+            const weightSlider = document.getElementById('weight-slider');
+            const weightDisplay = document.getElementById('weight-display');
+            weightSlider.addEventListener('input', function() {
+                weightDisplay.textContent = WEIGHT_CONFIGS[this.value].label;
+            });
+            
+            const intensitySlider = document.getElementById('intensity-slider');
+            const intensityDisplay = document.getElementById('intensity-display');
+            intensitySlider.addEventListener('input', function() {
+                firingIntensity = parseFloat(this.value);
+                intensityDisplay.textContent = firingIntensity.toFixed(1) + 'x';
+                
+                applyIntensityToUnits();
+            });
+            
+            document.getElementById('add-thought-btn').addEventListener('click', addThought);
+            
+            document.getElementById('thought-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addThought();
+                }
+            });
+            
+            document.getElementById('ceasefire-btn').addEventListener('click', toggleCeasefire);
+            document.getElementById('clear-btn').addEventListener('click', clearAll);
+            
+            document.addEventListener('keydown', function(e) {
+                if (phase === 'questions') {
+                    if (e.key === 'ArrowLeft' || e.key === 't' || e.key === 'T' || e.key === '1') {
+                        answerQuestion(true);
+                    } else if (e.key === 'ArrowRight' || e.key === 'f' || e.key === 'F' || e.key === '2') {
+                        answerQuestion(false);
+                    }
+                }
+                
+                // Escape to end meditation early
+                if (e.key === 'Escape' && meditationState.active) {
+                    endMeditationEarly();
+                }
+            });
+        }
+        
+        // ===== INIT =====
+        function init() {
+            setupEventListeners();
+        }
+        
+        init();
+    </script>
+</body>
+</html>
