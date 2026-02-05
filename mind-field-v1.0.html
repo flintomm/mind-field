@@ -494,6 +494,54 @@
             display: flex;
         }
         
+        /* ===== BASES / CITIES ===== */
+        .quadrant-base {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            z-index: 5;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            border: 3px solid;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .quadrant-base:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+        }
+        
+        .quadrant-base.good {
+            background: linear-gradient(135deg, rgba(74, 158, 255, 0.3), rgba(74, 158, 255, 0.1));
+            border-color: rgba(74, 158, 255, 0.6);
+        }
+        
+        .quadrant-base.bad {
+            background: linear-gradient(135deg, rgba(255, 74, 106, 0.3), rgba(255, 74, 106, 0.1));
+            border-color: rgba(255, 74, 106, 0.6);
+        }
+        
+        .quadrant-base.base-tl { top: 80px; left: 80px; }
+        .quadrant-base.base-tr { top: 80px; right: 80px; }
+        .quadrant-base.base-bl { bottom: 80px; left: 80px; }
+        .quadrant-base.base-br { bottom: 80px; right: 80px; }
+        
+        .base-label {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            color: rgba(255,255,255,0.6);
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
         /* ===== MEDITATION BREATHING PROMPT ===== */
         #breath-prompt {
             position: absolute;
@@ -696,11 +744,27 @@
             opacity: 0;
             transform: translateX(30px);
             transition: all 0.5s ease 0.3s;
+            position: relative;
         }
         
         #input-panel.visible {
             opacity: 1;
             transform: translateX(0);
+        }
+        
+        #input-panel.collapsed {
+            width: auto;
+            min-width: 60px;
+            padding: 15px;
+        }
+        
+        #input-panel.collapsed .panel-content {
+            display: none;
+        }
+        
+        #input-panel.collapsed h2 {
+            margin-bottom: 0;
+            justify-content: center;
         }
         
         #input-panel h2 {
@@ -710,6 +774,27 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            justify-content: space-between;
+        }
+        
+        .panel-toggle {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.5);
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        
+        .panel-toggle:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        
+        #input-panel.collapsed .panel-toggle {
+            transform: rotate(180deg);
         }
         
         .input-group {
@@ -1753,6 +1838,32 @@
                 display: none !important;
             }
             
+            /* Bases scale down on mobile */
+            .quadrant-base {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+            }
+            
+            .quadrant-base.base-tl { top: 60px; left: 15px; }
+            .quadrant-base.base-tr { top: 60px; right: 15px; }
+            .quadrant-base.base-bl { bottom: 60px; left: 15px; }
+            .quadrant-base.base-br { bottom: 60px; right: 15px; }
+            
+            .base-label {
+                font-size: 7px;
+                bottom: -16px;
+            }
+            
+            /* Collapsed panel for mobile */
+            #input-panel.collapsed {
+                position: fixed;
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                z-index: 100;
+            }
+            
             /* Larger touch targets */
             .answer-btn {
                 padding: 18px 30px;
@@ -2045,6 +2156,24 @@
                         <span class="quadrant-label ql-br">Bad Ideas/Fears<br>❌ ⏭️</span>
                     </div>
                     
+                    <!-- Bases / Cities -->
+                    <div class="quadrant-base good base-tl" data-quadrant="goodMemory" title="Good Memories Base">
+                        🏰
+                        <span class="base-label">Sanctuary</span>
+                    </div>
+                    <div class="quadrant-base good base-tr" data-quadrant="goodIdea" title="Good Ideas Base">
+                        🏛️
+                        <span class="base-label">Hope City</span>
+                    </div>
+                    <div class="quadrant-base bad base-bl" data-quadrant="badMemory" title="Bad Memories Base">
+                        🏚️
+                        <span class="base-label">Ruins</span>
+                    </div>
+                    <div class="quadrant-base bad base-br" data-quadrant="badIdea" title="Bad Ideas Base">
+                        🏭
+                        <span class="base-label">Worry Works</span>
+                    </div>
+                    
                     <!-- Zoom buttons -->
                     <button class="zoom-btn ztl" data-quadrant="goodMemory">🔍 Inspect</button>
                     <button class="zoom-btn ztr" data-quadrant="goodIdea">🔍 Inspect</button>
@@ -2096,72 +2225,77 @@
             </div>
             
             <div id="input-panel">
-                <h2>🎯 Add to Battlefield</h2>
+                <h2>
+                    🎯 Add to Battlefield
+                    <button class="panel-toggle" id="panel-toggle" title="Collapse panel">◀</button>
+                </h2>
                 
-                <div class="input-group">
-                    <label>What's firing at you?</label>
-                    <input type="text" id="thought-input" placeholder="Enter a thought, memory, or worry...">
-                </div>
-                
-                <div class="input-group">
-                    <label>Type</label>
-                    <div class="radio-group" id="type-group">
-                        <label class="radio-option selected" data-value="past">
-                            <input type="radio" name="type" value="past" checked>
-                            ⏮️ Past Memory
-                        </label>
-                        <label class="radio-option" data-value="future">
-                            <input type="radio" name="type" value="future">
-                            ⏭️ Future Idea
-                        </label>
+                <div class="panel-content">
+                    <div class="input-group">
+                        <label>What's firing at you?</label>
+                        <input type="text" id="thought-input" placeholder="Enter a thought, memory, or worry...">
                     </div>
-                </div>
-                
-                <div class="input-group">
-                    <label>Valence</label>
-                    <div class="radio-group" id="valence-group">
-                        <label class="radio-option selected good" data-value="good">
-                            <input type="radio" name="valence" value="good" checked>
-                            ✅ Good
-                        </label>
-                        <label class="radio-option" data-value="bad">
-                            <input type="radio" name="valence" value="bad">
-                            ❌ Bad
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="input-group">
-                    <label>Weight</label>
-                    <div class="weight-slider-container">
-                        <div class="weight-labels">
-                            <span>Light</span>
-                            <span>Medium</span>
-                            <span>Heavy</span>
+                    
+                    <div class="input-group">
+                        <label>Type</label>
+                        <div class="radio-group" id="type-group">
+                            <label class="radio-option selected" data-value="past">
+                                <input type="radio" name="type" value="past" checked>
+                                ⏮️ Past Memory
+                            </label>
+                            <label class="radio-option" data-value="future">
+                                <input type="radio" name="type" value="future">
+                                ⏭️ Future Idea
+                            </label>
                         </div>
-                        <input type="range" id="weight-slider" min="1" max="3" value="2" step="1">
-                        <div class="weight-value" id="weight-display">Medium</div>
                     </div>
-                </div>
-                
-                <button id="add-thought-btn">Add to Battlefield</button>
-                
-                <div class="intensity-section">
-                    <h3>⚡ Firing Intensity</h3>
-                    <input type="range" id="intensity-slider" min="0.1" max="3" value="1" step="0.1">
-                    <div class="intensity-value" id="intensity-display">1.0x</div>
-                    <div class="intensity-status" id="intensity-status">All units active</div>
-                </div>
-                
-                <div class="controls-section">
-                    <button class="btn-ceasefire" id="ceasefire-btn">🧘 Meditate</button>
-                    <button class="btn-clear" id="clear-btn">🗑️ Clear All</button>
-                </div>
-                
-                <div id="thoughts-list">
-                    <div class="empty-state">
-                        <div class="icon">💭</div>
-                        <div>Your thoughts will appear here.</div>
+                    
+                    <div class="input-group">
+                        <label>Valence</label>
+                        <div class="radio-group" id="valence-group">
+                            <label class="radio-option selected good" data-value="good">
+                                <input type="radio" name="valence" value="good" checked>
+                                ✅ Good
+                            </label>
+                            <label class="radio-option" data-value="bad">
+                                <input type="radio" name="valence" value="bad">
+                                ❌ Bad
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Weight</label>
+                        <div class="weight-slider-container">
+                            <div class="weight-labels">
+                                <span>Light</span>
+                                <span>Medium</span>
+                                <span>Heavy</span>
+                            </div>
+                            <input type="range" id="weight-slider" min="1" max="3" value="2" step="1">
+                            <div class="weight-value" id="weight-display">Medium</div>
+                        </div>
+                    </div>
+                    
+                    <button id="add-thought-btn">Add to Battlefield</button>
+                    
+                    <div class="intensity-section">
+                        <h3>⚡ Firing Intensity</h3>
+                        <input type="range" id="intensity-slider" min="0.1" max="3" value="1" step="0.1">
+                        <div class="intensity-value" id="intensity-display">1.0x</div>
+                        <div class="intensity-status" id="intensity-status">All units active</div>
+                    </div>
+                    
+                    <div class="controls-section">
+                        <button class="btn-ceasefire" id="ceasefire-btn">🧘 Meditate</button>
+                        <button class="btn-clear" id="clear-btn">🗑️ Clear All</button>
+                    </div>
+                    
+                    <div id="thoughts-list">
+                        <div class="empty-state">
+                            <div class="icon">💭</div>
+                            <div>Your thoughts will appear here.</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -5955,6 +6089,22 @@
             });
             
             document.getElementById('zoom-back-btn').addEventListener('click', zoomOut);
+            
+            // Panel collapse toggle
+            document.getElementById('panel-toggle').addEventListener('click', function() {
+                const panel = document.getElementById('input-panel');
+                panel.classList.toggle('collapsed');
+                this.textContent = panel.classList.contains('collapsed') ? '▶' : '◀';
+                this.title = panel.classList.contains('collapsed') ? 'Expand panel' : 'Collapse panel';
+            });
+            
+            // Base/city click handlers
+            document.querySelectorAll('.quadrant-base').forEach(base => {
+                base.addEventListener('click', function() {
+                    const quadrant = this.dataset.quadrant;
+                    zoomToQuadrant(quadrant);
+                });
+            });
             
             // Settings
             document.getElementById('settings-btn').addEventListener('click', openSettings);
