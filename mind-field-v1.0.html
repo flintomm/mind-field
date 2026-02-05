@@ -584,6 +584,9 @@
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.4);
             transition: transform 0.5s ease;
+            max-width: 100%;
+            height: auto;
+            display: block;
         }
         
         /* Quadrant labels on canvas */
@@ -605,36 +608,57 @@
             transition: opacity 0.3s ease;
         }
         
+        .quadrant-label::after {
+            content: '🔍';
+            display: block;
+            text-align: center;
+            margin-top: 4px;
+            font-size: 12px;
+            opacity: 0.6;
+        }
+        
         .ql-tl { top: 15px; left: 20px; }
         .ql-tr { top: 15px; right: 20px; text-align: right; }
         .ql-bl { bottom: 15px; left: 20px; }
         .ql-br { bottom: 15px; right: 20px; text-align: right; }
         
+        /* Hide magnifying glass on mobile - quadrants are directly clickable */
+        @media (max-width: 640px) {
+            .quadrant-label::after {
+                display: none;
+            }
+        }
+        
         /* Zoom inspect buttons */
         .zoom-btn {
             position: absolute;
-            padding: 6px 12px;
-            font-size: 0.75rem;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 6px;
-            background: rgba(0, 0, 0, 0.5);
-            color: rgba(255, 255, 255, 0.7);
+            padding: 8px 14px;
+            font-size: 0.8rem;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            color: rgba(255, 255, 255, 0.9);
             cursor: pointer;
             transition: all 0.2s;
             z-index: 10;
+            backdrop-filter: blur(4px);
         }
         
         .zoom-btn:hover {
-            background: rgba(155, 89, 182, 0.4);
+            background: rgba(155, 89, 182, 0.5);
             border-color: #9b59b6;
             color: #fff;
             transform: scale(1.05);
         }
         
-        .zoom-btn.ztl { top: 35px; left: 20px; }
-        .zoom-btn.ztr { top: 35px; right: 20px; }
-        .zoom-btn.zbl { bottom: 35px; left: 20px; }
-        .zoom-btn.zbr { bottom: 35px; right: 20px; }
+        .zoom-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .zoom-btn.ztl { top: 45px; left: 20px; }
+        .zoom-btn.ztr { top: 45px; right: 20px; }
+        .zoom-btn.zbl { bottom: 45px; left: 20px; }
+        .zoom-btn.zbr { bottom: 45px; right: 20px; }
         
         #zoom-back-btn {
             position: absolute;
@@ -1621,6 +1645,10 @@
             cursor: pointer;
         }
         
+        #battlefield.clickable-quadrant {
+            cursor: zoom-in;
+        }
+        
         @media (max-width: 900px) {
             .main-container {
                 flex-direction: column;
@@ -1704,6 +1732,74 @@
             .profile-details {
                 grid-template-columns: 1fr;
                 gap: 10px;
+            }
+        }
+        
+        /* Mobile-specific canvas sizing */
+        @media (max-width: 640px) {
+            #canvas-container {
+                width: 100%;
+                max-width: 100vw;
+                padding: 0 10px;
+            }
+            
+            canvas {
+                width: 100% !important;
+                height: auto !important;
+            }
+            
+            /* Hide zoom buttons on mobile - quadrants are clickable */
+            .zoom-btn {
+                display: none !important;
+            }
+            
+            /* Larger touch targets */
+            .answer-btn {
+                padding: 18px 30px;
+                font-size: 1.1rem;
+                min-width: 120px;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .welcome-title {
+                font-size: 2rem;
+            }
+            
+            .subtitle {
+                font-size: 0.85rem;
+            }
+            
+            /* Make input panel full width on small screens */
+            #input-panel {
+                width: 100%;
+                max-width: 100%;
+                margin: 0 10px;
+            }
+            
+            body {
+                padding: 10px;
+            }
+        }
+        
+        /* Extra small screens */
+        @media (max-width: 400px) {
+            .answer-buttons {
+                flex-direction: column;
+                gap: 15px;
+                width: 100%;
+                padding: 0 20px;
+            }
+            
+            .answer-btn {
+                width: 100%;
+            }
+            
+            #start-btn, #continue-btn {
+                width: 90%;
+                max-width: 280px;
             }
         }
     </style>
@@ -2376,7 +2472,7 @@
             // Step 2: Zoom tutorial - highlight good memories quadrant
             {
                 title: "Inspect a Quadrant",
-                message: "Click the <span class='tutorial-highlight'>🔍 Inspect</span> button on the <span class='tutorial-highlight'>Good Memories</span> quadrant (top-left) to zoom in.",
+                message: "Click the <span class='tutorial-highlight'>Good Memories</span> quadrant (top-left) to zoom in and inspect it.",
                 button: null, // Wait for user action
                 highlight: 'zoom-goodMemory',
                 autoAdvance: false
@@ -2597,6 +2693,51 @@
         const canvas = document.getElementById('battlefield');
         const ctx = canvas.getContext('2d');
         
+        // Responsive canvas sizing
+        function resizeCanvas() {
+            const container = document.getElementById('canvas-container');
+            const maxWidth = Math.min(600, window.innerWidth - 40);
+            const aspectRatio = 400 / 600; // height / width
+            
+            if (window.innerWidth <= 640) {
+                // Mobile: scale to fit width
+                canvas.style.width = '100%';
+                canvas.style.height = 'auto';
+            } else {
+                // Desktop: fixed size
+                canvas.style.width = '';
+                canvas.style.height = '';
+            }
+        }
+        
+        // Initial resize
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Get which quadrant a canvas position is in
+        function getQuadrantAtPosition(canvasX, canvasY) {
+            const transform = getZoomTransform();
+            const x = (canvasX - transform.offsetX) / transform.scale;
+            const y = (canvasY - transform.offsetY) / transform.scale;
+            
+            // Quadrant boundaries (based on QUADRANTS config)
+            // goodMemory: xRange [80, 280], yRange [50, 180]
+            // goodIdea: xRange [320, 520], yRange [50, 180]
+            // badMemory: xRange [80, 280], yRange [220, 350]
+            // badIdea: xRange [320, 520], yRange [220, 350]
+            
+            if (x >= 40 && x <= 560 && y >= 20 && y <= 380) {
+                if (x < 300) {
+                    if (y < 200) return 'goodMemory';
+                    return 'badMemory';
+                } else {
+                    if (y < 200) return 'goodIdea';
+                    return 'badIdea';
+                }
+            }
+            return null;
+        }
+        
         // =====================================================
         // 4. SAVE/LOAD SYSTEM
         // =====================================================
@@ -2752,7 +2893,9 @@
             
             // Add highlights
             if (stepData.highlight === 'zoom-goodMemory') {
-                document.querySelector('.zoom-btn.ztl').classList.add('tutorial-pulse');
+                document.querySelector('.zoom-btn.ztl')?.classList.add('tutorial-pulse');
+                // Also highlight the canvas to indicate quadrant is clickable
+                document.getElementById('battlefield').classList.add('tutorial-pulse');
             } else if (stepData.highlight === 'zoom-back') {
                 document.getElementById('zoom-back-btn').classList.add('tutorial-pulse');
             } else if (stepData.highlight === 'meditate-btn') {
@@ -2777,6 +2920,7 @@
         function advanceTutorial() {
             // Clear highlights
             document.querySelectorAll('.tutorial-pulse').forEach(el => el.classList.remove('tutorial-pulse'));
+            document.getElementById('battlefield').classList.remove('tutorial-pulse');
             
             const nextStep = tutorialState.step + 1;
             
@@ -2816,6 +2960,7 @@
             
             // Clear any remaining highlights
             document.querySelectorAll('.tutorial-pulse').forEach(el => el.classList.remove('tutorial-pulse'));
+            document.getElementById('battlefield').classList.remove('tutorial-pulse');
             
             // Check if table setup has been completed
             if (!saveState.tableSetupCompleted) {
@@ -2891,6 +3036,7 @@
             saveTutorialState();
             hideTutorialOverlay();
             document.querySelectorAll('.tutorial-pulse').forEach(el => el.classList.remove('tutorial-pulse'));
+            document.getElementById('battlefield').classList.remove('tutorial-pulse');
             
             // If table setup hasn't been done, show it
             if (!saveState.tableSetupCompleted && phase === 'full') {
@@ -5497,6 +5643,7 @@
         let hoveredUnit = null;
         
         function getUnitAtPosition(canvasX, canvasY) {
+            // canvasX and canvasY should already be in canvas internal coordinate space
             // Apply inverse zoom transform if zoomed
             const transform = getZoomTransform();
             const x = (canvasX - transform.offsetX) / transform.scale;
@@ -5631,24 +5778,72 @@
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
                 
-                const unit = getUnitAtPosition(x, y);
+                // Scale coordinates to match canvas internal resolution
+                const scaleX = canvasEl.width / rect.width;
+                const scaleY = canvasEl.height / rect.height;
+                const canvasX = x * scaleX;
+                const canvasY = y * scaleY;
+                
+                const unit = getUnitAtPosition(canvasX, canvasY);
                 
                 if (unit) {
                     canvasEl.classList.add('clickable-units');
+                    canvasEl.classList.remove('clickable-quadrant');
                     hoveredUnit = unit;
-                } else {
+                } else if (!zoomState.active && !meditationState.active) {
                     canvasEl.classList.remove('clickable-units');
+                    const quadrant = getQuadrantAtPosition(canvasX, canvasY);
+                    if (quadrant) {
+                        canvasEl.classList.add('clickable-quadrant');
+                    } else {
+                        canvasEl.classList.remove('clickable-quadrant');
+                    }
+                    hoveredUnit = null;
+                } else {
+                    canvasEl.classList.remove('clickable-units', 'clickable-quadrant');
                     hoveredUnit = null;
                 }
             });
             
+            // Touch events for mobile
+            canvasEl.addEventListener('touchstart', function(e) {
+                if (phase !== 'full' && phase !== 'battlefield') return;
+                if (meditationState.active) return;
+                
+                const touch = e.touches[0];
+                const rect = canvasEl.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+                
+                // Scale coordinates to match canvas internal resolution
+                const scaleX = canvasEl.width / rect.width;
+                const scaleY = canvasEl.height / rect.height;
+                const canvasX = x * scaleX;
+                const canvasY = y * scaleY;
+                
+                const unit = getUnitAtPosition(canvasX, canvasY);
+                
+                if (unit) {
+                    // Show unit profile on unit tap
+                    e.preventDefault();
+                    showUnitProfile(unit);
+                } else if (!zoomState.active) {
+                    // Check for quadrant tap to zoom
+                    const quadrant = getQuadrantAtPosition(canvasX, canvasY);
+                    if (quadrant) {
+                        e.preventDefault();
+                        zoomToQuadrant(quadrant);
+                    }
+                }
+            }, { passive: false });
+            
             // Mouse leave
             canvasEl.addEventListener('mouseleave', function() {
-                canvasEl.classList.remove('clickable-units');
+                canvasEl.classList.remove('clickable-units', 'clickable-quadrant');
                 hoveredUnit = null;
             });
             
-            // Click handler
+            // Click handler (mouse)
             canvasEl.addEventListener('click', function(e) {
                 if (phase !== 'full' && phase !== 'battlefield') return;
                 if (meditationState.active) return; // Don't allow during meditation
@@ -5657,10 +5852,22 @@
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
                 
-                const unit = getUnitAtPosition(x, y);
+                // Scale coordinates to match canvas internal resolution
+                const scaleX = canvasEl.width / rect.width;
+                const scaleY = canvasEl.height / rect.height;
+                const canvasX = x * scaleX;
+                const canvasY = y * scaleY;
+                
+                const unit = getUnitAtPosition(canvasX, canvasY);
                 
                 if (unit) {
                     showUnitProfile(unit);
+                } else if (!zoomState.active) {
+                    // Click on quadrant to zoom in
+                    const quadrant = getQuadrantAtPosition(canvasX, canvasY);
+                    if (quadrant) {
+                        zoomToQuadrant(quadrant);
+                    }
                 }
             });
         }
