@@ -1,0 +1,11 @@
+habit_id,habit_name,habit_domain,habit_unit_name,monster_name,monster_title,spawn_trigger,initial_power,power_scaling,current_power,current_streak,dominance_state
+H001,Morning Exercise,Physical,The Dawn Strider,The Drowner,That Which Pulls Downward,Skip morning exercise OR press snooze >1,3,+1.5 per skip,3,0,BALANCED
+H002,Daily Meditation,Spiritual,The Still Point,The Chatterling Swarm,The Unending Noise,Miss session OR stop <2 min,2,+0.8 per skip,2,0,BALANCED
+H003,Reading Before Bed,Mental,The Lantern Keeper,The Infinite Scroll,Devourer of Attention,Use phone in bed OR sleep to videos,4,+1.2 per skip,4,0,BALANCED
+H004,Weekly Family Call,Social,The Bridge Builder,The Drifter,The Growing Distance,Miss call + no reschedule 48h,3,+1.5 per skip,3,0,BALANCED
+H005,Daily Writing Practice,Creative,The Word Smith,The Blank Page Wraith,The Perfectionist's Shadow,No writing OR delete everything,5,+0.9 per skip,5,0,BALANCED
+H006,Daily Spending Review,Financial,The Vault Keeper,The Leak,The Thousand Small Hungers,Unlogged purchase OR over budget,2,+1.1 per skip,2,0,BALANCED
+H007,Hydration Target,Physical,The Clear Stream,The Desiccator,The Thief of Vitality,<1.5L OR all caffeine/sugar,2,+1.3 per day,2,0,BALANCED
+H008,Gratitude Practice,Spiritual,The Light Gatherer,The Gray,The Color Eater,Miss entry OR generic items,3,+0.8 per skip,3,0,BALANCED
+H009,Language Study,Mental,The Tongue Weaver,The Tongue-Tied Giant,The Fear of Sounding Foolish,Skip lesson OR avoid speaking,4,+1.0 per skip,4,0,BALANCED
+H010,Bedtime Routine,Physical,The Moonward,The FOMO Wraith,The Fear of Missing Everything,After 11:30pm OR late scrolling,3,+1.2 per night,3,0,BALANCED

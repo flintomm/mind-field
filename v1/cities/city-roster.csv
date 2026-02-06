@@ -1,0 +1,6 @@
+id,name,quadrant,type,icon,description,unlock_condition
+sanctuary,Sanctuary,goodMemory,home_base,🏰,"A bastion of safety built from your happiest memories. Warm light spills from every window.",default
+hope_city,Hope City,goodIdea,capital,🏛️,"Crystal spires that shimmer with possibility. The streets hum with plans not yet made.",default
+ruins,The Ruins,badMemory,fortress,🏚️,"Collapsed towers of what once was. Shadows move where joy once lived.",default
+worry_works,Worry Works,badIdea,industrial,🏭,"Smokestacks belching anxiety into the air. Assembly lines of worst-case scenarios.",default
+,,,,,,

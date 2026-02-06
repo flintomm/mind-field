@@ -1,8 +1,71 @@
-# Mind Field
+# 🧠 Mind Field
 
-**Gamified meditation through battlefield visualization**
+> *A gamified meditation experience where your habits are a battlefield.*
 
-An interactive tool that makes invisible thought patterns visible. See memories and ideas as forces firing at your present moment, learn why fighting them doesn't work, and practice ceasefire.
+---
+
+## What Is Mind Field?
+
+**Mind Field** turns self-improvement into a strategy game. Your habits become units on a battlefield, fighting against psychological resistance personified as monsters.
+
+- ✅ **Maintain habits** → Your units win battles, monsters retreat
+- ❌ **Skip habits** → Monsters grow stronger, encroach on your territory
+- 💀 **Hit rock bottom** → Redemption units spawn to guide you back
+
+The battle is **eternal**. You don't "beat" procrastination once and for all — you keep it at bay through consistent practice.
+
+---
+
+## Versions
+
+| Version | Status | Description |
+|---------|--------|-------------|
+| **[v1.0](./v1/)** | ✅ Shipped | Tutorial system, box breathing, quadrant visualization |
+| **[v2.0](./v2/)** | 🚧 Design Complete | Habit-monster warfare, redemption arcs, rock bottom recovery |
+
+---
+
+## v2.0 Highlights
+
+### The Bestiary
+10 habit-monster pairs with psychological depth:
+
+| Habit | Monster | Represents |
+|-------|---------|------------|
+| Morning Exercise | The Drowner | Inertia, comfort's pull |
+| Daily Meditation | The Chatterling Swarm | Racing thoughts |
+| Reading Before Bed | The Infinite Scroll | Digital addiction |
+| Weekly Family Call | The Drifter | Social atrophy |
+| Daily Writing | The Blank Page Wraith | Perfectionism |
+
+### Rock Bottom Units
+When everything collapses, you get a **redemption arc** tailored to your failure:
+
+- 🔥 **Stubborn Spark** — Total collapse → pick one thing, start there
+- 🛡️ **Remnant** — Repeated failure → each fall makes you stronger
+- ❓ **Question** — Apathy → curiosity over obligation
+- ✂️ **Simplifier** — Overwhelm → pause habits, focus hard
+- 🪞 **Witness** — Shame spiral → self-compassion tracking
+- 🤝 **Reach** — Isolation → connection as recovery
+- 🐦 **Phoenix Ash** — Burnout → rest, then rebuild wiser
+
+---
+
+## Philosophy
+
+1. **Emotional Honesty** — The game mirrors real psychology, not arbitrary difficulty
+2. **No Shame** — Monsters are natural forces, not moral judgments
+3. **Perpetual Siege** — No truce; every day is a battle
+4. **Reversible Corruption** — Territory can be reclaimed, but leaves "scars"
+5. **Contextual Opposition** — Monsters only appear when you actually slip
+
+---
+
+## Quick Links
+
+- [v1.0 Live Demo](https://flintomm.github.io/mind-field/mind-field-v1.0.html)
+- [v2.0 Design Docs](./v2/design/)
+- [v2.0 Data (CSV)](./v2/data/)
 
 ---
 
@@ -10,60 +73,34 @@ An interactive tool that makes invisible thought patterns visible. See memories 
 
 ```
 mind-field/
-├── README.md           ← You are here
-├── docs/
-│   ├── project-plan.md ← Full vision, framework, roadmap
-│   └── dev-log.md      ← Development history, decisions, progress
-└── prototypes/
-    ├── mind-field-prototype.html       ← v0.1: Static territory map
-    ├── mind-field-prototype-v2.html    ← v0.2: Active combat animation
-    └── mind-field-prototype-v3.html    ← v0.3: Center-targeted bombardment
+├── README.md           # You are here
+├── v1/                 # Shipped version
+│   ├── mind-field-v1.0.html
+│   ├── docs/
+│   ├── characters/
+│   └── ...
+└── v2/                 # In design
+    ├── README.md
+    ├── design/         # Game design docs
+    │   ├── 01-bestiary.md
+    │   ├── 02-rock-bottom-units.md
+    │   └── 03-battle-mechanics.md
+    ├── data/           # Import-ready data
+    │   ├── bestiary.csv
+    │   ├── rock_bottom_units.csv
+    │   └── sample_player_state.json
+    └── docs/           # Technical docs
 ```
 
 ---
 
-## Quick Start
+## Credits
 
-**Try the latest prototype:**
-```bash
-open prototypes/mind-field-prototype-v3.html
-```
-
-**Read the vision:**
-```bash
-open docs/project-plan.md
-```
-
-**Check development progress:**
-```bash
-open docs/dev-log.md
-```
+**Design & Vision:** Tom  
+**Documentation:** Flint
 
 ---
 
-## Current Status
+## License
 
-**Phase**: Prototype (v0.7 → v7.1)
-**Latest**: Box breathing meditation with NOW orb breath guidance
-**Building**: v7.1 - Meditation fixes + Meditated Mech (post-meditation reward unit)
-**Next**: v0.8 - Quadrant zoom/inspect mode
-
----
-
-## Core Concept
-
-- **Metaphor**: Memories (past) and ideas (future) fire at your present moment
-- **Insight**: Peace isn't winning - it's ceasefire
-- **Philosophy**: The battle is eternal (yin-yang), not something to "fix"
-- **Goal**: Daily practice tool for navigating the conflict
-
----
-
-## Elevator Pitch
-
-> "Makes invisible thought patterns visible. Gamifies meditation. Turns mindfulness into an interactive battlefield where you practice peace within the eternal conflict."
-
----
-
-_Created: 2026-02-03_
-_Status: Active Development_
+TBD

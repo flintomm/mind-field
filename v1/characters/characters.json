@@ -1,0 +1,41 @@
+{
+  "characters": [
+    {
+      "id": "thunia_icen",
+      "name": "Thunia Icen",
+      "origin": "Jupiter",
+      "quadrant": "bad_idea",
+      "unit_type": "infantry",
+      "thrives": "Watching laziness spread",
+      "hates": ["Work", "initiative"],
+      "backstory": "A gas giant dweller who finds beauty in stillness and stagnation. Thunia drifted to Earth on a solar wind and now wanders the Mind Field, encouraging all who will listen to simply... stop.",
+      "appearance": "Shimmering ammonia-cloud form, slow-moving, leaves frost trails",
+      "rarity": "common",
+      "unlock_condition": "default"
+    }
+  ],
+  "name_banks": {
+    "first": [
+      "Astra", "Bram", "Cass", "Dorian", "Elara", "Fenn", "Gyre", "Hallow", 
+      "Iris", "Jor", "Kael", "Lux", "Mira", "Nox", "Orin", "Pax", 
+      "Quill", "Rune", "Sera", "Thunia", "Vex", "Wren", "Xan", "Yarrow", "Zephyr"
+    ],
+    "last": [
+      "Ash", "Bloom", "Cinder", "Dusk", "Ember", "Frost", "Gleam", "Haven",
+      "Icen", "Jolt", "Kern", "Lumen", "Mire", "Nebul", "Omen", "Pulse",
+      "Quench", "Riven", "Shade", "Thorn", "Umbra", "Vale", "Wane", "Xyle", "Yield"
+    ]
+  },
+  "origins": [
+    "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune",
+    "Pluto", "Europa", "Titan", "Ganymede", "Callisto", "Io", "Triton",
+    "The Kuiper Belt", "The Oort Cloud", "Proxima Centauri b", "Kepler-186f",
+    "The Dream Realm", "The Memory Palace", "The Void Between Thoughts"
+  ],
+  "concepts": {
+    "good_memory": ["Nostalgia", "Pride", "Gratitude", "Triumph", "Joy", "Comfort", "Safety"],
+    "good_idea": ["Hope", "Ambition", "Creativity", "Confidence", "Excitement", "Anticipation"],
+    "bad_memory": ["Regret", "Shame", "Guilt", "Loss", "Humiliation", "Betrayal"],
+    "bad_idea": ["Doubt", "Fear", "Anxiety", "Catastrophizing", "Procrastination", "Sloth"]
+  }
+}

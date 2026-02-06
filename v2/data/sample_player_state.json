@@ -1,0 +1,158 @@
+{
+  "_comment": "Sample player state for Mind Field v2.0",
+  "player_id": "player_001",
+  "created_at": "2026-02-01T08:00:00Z",
+  "last_updated": "2026-02-06T12:30:00Z",
+  
+  "player_level": 5,
+  "total_habits_formed": 8,
+  "total_comebacks": 3,
+  
+  "habits": [
+    {
+      "habit_id": "H001",
+      "name": "Morning Exercise",
+      "domain": "Physical",
+      "status": "active",
+      
+      "unit": {
+        "name": "The Dawn Strider",
+        "base_power": 5,
+        "current_power": 8.5,
+        "evolution_stage": 2,
+        "total_wins": 24,
+        "current_streak": 12
+      },
+      
+      "monster": {
+        "name": "The Drowner",
+        "initial_power": 3,
+        "current_power": 3.0,
+        "consecutive_losses": 0,
+        "total_defeats": 4,
+        "dominance_state": "dormant"
+      },
+      
+      "battle_stats": {
+        "dominance_ratio": 0.74,
+        "state": "HABIT_DOMINANT",
+        "last_battle_date": "2026-02-06",
+        "last_battle_outcome": "VICTORY",
+        "battle_history": [
+          {"date": "2026-02-06", "type": "The Ritual", "outcome": "VICTORY"},
+          {"date": "2026-02-05", "type": "The Stand", "outcome": "VICTORY"},
+          {"date": "2026-02-04", "type": "The Stand", "outcome": "VICTORY"}
+        ]
+      }
+    },
+    {
+      "habit_id": "H003",
+      "name": "Reading Before Bed",
+      "domain": "Mental",
+      "status": "active",
+      
+      "unit": {
+        "name": "The Lantern Keeper",
+        "base_power": 5,
+        "current_power": 4.5,
+        "evolution_stage": 1,
+        "total_wins": 8,
+        "current_streak": 2
+      },
+      
+      "monster": {
+        "name": "The Infinite Scroll",
+        "initial_power": 4,
+        "current_power": 6.8,
+        "consecutive_losses": 3,
+        "total_defeats": 6,
+        "dominance_state": "active"
+      },
+      
+      "battle_stats": {
+        "dominance_ratio": 0.40,
+        "state": "BALANCED",
+        "last_battle_date": "2026-02-06",
+        "last_battle_outcome": "DEFEAT",
+        "battle_history": [
+          {"date": "2026-02-06", "type": "The Temptation", "outcome": "DEFEAT", "defeat_reason": "phone_in_bed"},
+          {"date": "2026-02-05", "type": "The Stand", "outcome": "VICTORY"},
+          {"date": "2026-02-04", "type": "The Stand", "outcome": "DEFEAT"}
+        ]
+      }
+    },
+    {
+      "habit_id": "H010",
+      "name": "Bedtime Routine",
+      "domain": "Physical",
+      "status": "struggling",
+      
+      "unit": {
+        "name": "The Moonward",
+        "base_power": 5,
+        "current_power": 5.0,
+        "evolution_stage": 1,
+        "total_wins": 3,
+        "current_streak": 0
+      },
+      
+      "monster": {
+        "name": "The FOMO Wraith",
+        "initial_power": 3,
+        "current_power": 9.2,
+        "consecutive_losses": 7,
+        "total_defeats": 12,
+        "dominance_state": "dominant"
+      },
+      
+      "battle_stats": {
+        "dominance_ratio": 0.35,
+        "state": "MONSTER_DOMINANT",
+        "last_battle_date": "2026-02-06",
+        "last_battle_outcome": "DEFEAT",
+        "corrupted_zones": ["bedroom_visualization"],
+        "battle_history": [
+          {"date": "2026-02-06", "type": "The Ritual", "outcome": "DEFEAT"},
+          {"date": "2026-02-05", "type": "The Stand", "outcome": "DEFEAT"},
+          {"date": "2026-02-04", "type": "The Stand", "outcome": "DEFEAT"}
+        ]
+      }
+    }
+  ],
+  
+  "rock_bottom_state": {
+    "is_at_rock_bottom": false,
+    "active_redemption_unit": null,
+    "redemption_history": [
+      {
+        "unit_id": "RB001",
+        "unit_name": "The Stubborn Spark",
+        "triggered_at": "2026-01-15T00:00:00Z",
+        "resolved_at": "2026-01-22T00:00:00Z",
+        "highest_stage_reached": 3,
+        "resolution_type": "Sustained Recovery"
+      }
+    ]
+  },
+  
+  "journal": {
+    "entries_count": 45,
+    "last_entry_date": "2026-02-05",
+    "sentiment_trend": [0.2, 0.1, -0.1, 0.0, -0.2],
+    "common_themes": ["tired", "busy", "trying"]
+  },
+  
+  "achievements": [
+    {"id": "first_habit", "name": "First Steps", "unlocked_at": "2026-02-01"},
+    {"id": "week_streak", "name": "Seven Days", "unlocked_at": "2026-02-08"},
+    {"id": "comeback_kid", "name": "Comeback Kid", "unlocked_at": "2026-01-22"}
+  ],
+  
+  "settings": {
+    "difficulty": "normal",
+    "notifications_enabled": true,
+    "notification_time": "08:00",
+    "theme": "dark",
+    "audio_enabled": true
+  }
+}

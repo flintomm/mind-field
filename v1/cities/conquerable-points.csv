@@ -1,0 +1,10 @@
+id,name,location_x,location_y,region,resource_type,controlled_by,description
+self_worth_base,Self-Worth Bastion,150,100,good_memory,confidence,neutral,"A fortified position overlooking the Valley of Accomplishments. Whoever holds this controls how you value yourself."
+trust_bridge,Trust Bridge,450,100,good_ideas,connection,neutral,"An ancient stone span arching over the Chasm of Doubt. Cross it to bind others to your cause."
+gratitude_grove,Gratitude Grove,150,300,good_memory,appreciation,neutral,"Bioluminescent trees that glow when acknowledged. The more you visit, the brighter they shine."
+ambition_spire,Ambition Spire,450,300,good_ideas,drive,neutral,"A tower with no visible top, climbing into clouds of possibility. Each floor requires more courage than the last."
+shame_pit,Shame Pit,100,250,bad_memory,weakness,enemy,"A sinkhole that whispers every embarrassment you've ever had. Its depths are bottomless."
+fear_fortress,Fear Fortress,500,250,bad_ideas,paralysis,enemy,"Walls made of 'what ifs' and moats of worst-case scenarios. The drawbridge only lowers for cowards."
+regret_ruins,Regret Ruins,200,350,bad_memory,past,enemy,"Collapsed monuments to choices not taken. The ghosts here wear your face."
+catastrophe_citadel,Catastrophe Citadel,400,350,bad_ideas,future,enemy,"A grim castle where tomorrow's disasters are rehearsed daily. The scriptwriters never sleep."
+,,,,,,,
